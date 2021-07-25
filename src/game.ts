@@ -4,7 +4,7 @@ import { Square } from "./square";
 import { Piece } from "./piece";
 
 export class Game {
-  public board = immutable.Map<Square, Piece>();
+  private board = immutable.Map<Square, Piece>();
 
   static empty(): Game {
     return new Game();
