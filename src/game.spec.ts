@@ -57,6 +57,25 @@ describe("Game", () => {
     });
   });
 
+  describe("equals and hashCode", () => {
+    it("implements immutable.ValueObject correctly", () => {
+      const game1 = chess.Game.empty()
+        .addPiece(Piece.fromString("P")!, Square.fromString("E4")!)
+        .addPiece(Piece.fromString("p")!, Square.fromString("E5")!);
+      const game2 = chess.Game.empty()
+        .addPiece(Piece.fromString("p")!, Square.fromString("E5")!)
+        .addPiece(Piece.fromString("P")!, Square.fromString("E4")!);
+      const game3 = chess.Game.empty()
+        .addPiece(Piece.fromString("p")!, Square.fromString("E5")!)
+        .addPiece(Piece.fromString("P")!, Square.fromString("E3")!);
+
+      expect(game1.equals(game2)).toBe(true);
+      expect(game1.hashCode()).toEqual(game2.hashCode());
+      expect(game1.equals(game3)).toBe(false);
+      expect(game2.equals(game3)).toBe(false);
+    });
+  });
+
   describe("addPiece", () => {
     it("returns a new Game with the provided piece added to the provided square", () => {
       const game = chess.Game.empty();
@@ -73,37 +92,113 @@ describe("Game", () => {
   describe("move", () => {
     const game = chess.Game.fromStartingPosition();
 
-    it("moves a piece from the source square to the destination square", () => {
-      const newGame = game.move(Square.fromString("E2")!, Square.fromString("E4")!);
-
-      expect(newGame.getPiece(Square.fromString("E2")!)).toBeUndefined();
-      expect(newGame.getPiece(Square.fromString("E4")!)).toEqual(Piece.fromString("P"));
-    });
-
     describe("when the source square is empty", () => {
       it("does nothing", () => {
-        const newGame = game.move(Square.fromString("E3")!, Square.fromString("E2")!);
-
-        expect(newGame.getPiece(Square.fromString("E2")!)).toEqual(Piece.fromString("P"));
-        expect(newGame.getPiece(Square.fromString("E3")!)).toBeUndefined();
+        expect(game.move(Square.fromString("E3")!, Square.fromString("E4")!).equals(game)).toBe(true);
       });
     });
 
-    describe("when the destination has an opposite colour piece", () => {
-      it("takes", () => {
-        const newGame = game.move(Square.fromString("E2")!, Square.fromString("E7")!);
+    describe("when moving a white pawn", () => {
+      describe("vertically, one square ahead", () => {
+        it("moves it", () => {
+          const newGame = game.move(Square.fromString("E2")!, Square.fromString("E3")!);
 
-        expect(newGame.getPiece(Square.fromString("E2")!)).toBeUndefined();
-        expect(newGame.getPiece(Square.fromString("E7")!)).toEqual(Piece.fromString("P")!);
+          expect(newGame.getPiece(Square.fromString("E2")!)).toBeUndefined();
+          expect(newGame.getPiece(Square.fromString("E3")!)).toEqual(Piece.fromString("P")!);
+        });
       });
-    });
 
-    describe("when the destination has a same colour piece", () => {
-      it("does nothing", () => {
-        const newGame = game.move(Square.fromString("E2")!, Square.fromString("E1")!);
+      describe("vertically, two squares ahead, from the 2nd file", () => {
+        it("moves it", () => {
+          const newGame = game.move(Square.fromString("E2")!, Square.fromString("E4")!);
 
-        expect(newGame.getPiece(Square.fromString("E2")!)).toEqual(Piece.fromString("P")!);
-        expect(newGame.getPiece(Square.fromString("E1")!)).toEqual(Piece.fromString("K")!);
+          expect(newGame.getPiece(Square.fromString("E2")!)).toBeUndefined();
+          expect(newGame.getPiece(Square.fromString("E4")!)).toEqual(Piece.fromString("P")!);
+        });
+      });
+
+      describe("vertically, two squares ahead, from a different file", () => {
+        it("does nothing", () => {
+          const initGame = game.move(Square.fromString("E2")!, Square.fromString("E3")!);
+
+          expect(initGame.move(Square.fromString("E3")!, Square.fromString("E5")!).equals(initGame)).toBe(true);
+        });
+      });
+
+      describe("vertically, ahead, to an occupied square", () => {
+        it("does nothing", () => {
+          const initGame = chess.Game.empty()
+            .addPiece(Piece.fromString("P")!, Square.fromString("E2")!)
+            .addPiece(Piece.fromString("P")!, Square.fromString("E4")!)
+            .addPiece(Piece.fromString("P")!, Square.fromString("E5")!);
+
+          expect(initGame.move(Square.fromString("E2")!, Square.fromString("E4")!).equals(initGame)).toBe(true);
+          expect(initGame.move(Square.fromString("E4")!, Square.fromString("E5")!).equals(initGame)).toBe(true);
+        });
+      });
+
+      describe("vertically, behind", () => {
+        it("does nothing", () => {
+          const initGame = game.move(Square.fromString("E2")!, Square.fromString("E4")!);
+
+          expect(initGame.move(Square.fromString("E4")!, Square.fromString("E3")!).equals(initGame)).toBe(true);
+          expect(initGame.move(Square.fromString("E4")!, Square.fromString("E2")!).equals(initGame)).toBe(true);
+        });
+      });
+
+      describe("diagonally, ahead, to an empty square", () => {
+        it("does nothing", () => {
+          expect(game.move(Square.fromString("E2")!, Square.fromString("D3")!).equals(game)).toBe(true);
+          expect(game.move(Square.fromString("E2")!, Square.fromString("F4")!).equals(game)).toBe(true);
+        });
+      });
+
+      describe("diagonally, one square ahead, to a square occupied by an opponent piece", () => {
+        it("takes", () => {
+          const initGame = chess.Game.empty()
+            .addPiece(Piece.fromString("P")!, Square.fromString("E4")!)
+            .addPiece(Piece.fromString("p")!, Square.fromString("F5")!)
+            .addPiece(Piece.fromString("p")!, Square.fromString("D5")!);
+
+          let newGame = initGame.move(Square.fromString("E4")!, Square.fromString("D5")!);
+          expect(newGame.getPiece(Square.fromString("E4")!)).toBeUndefined();
+          expect(newGame.getPiece(Square.fromString("D5")!)).toEqual(Piece.fromString("P")!);
+
+          newGame = initGame.move(Square.fromString("E4")!, Square.fromString("F5")!);
+          expect(newGame.getPiece(Square.fromString("E4")!)).toBeUndefined();
+          expect(newGame.getPiece(Square.fromString("F5")!)).toEqual(Piece.fromString("P")!);
+        });
+      });
+
+      describe("diagonally, one square ahead, to a square occupied by an own piece", () => {
+        it("does nothing", () => {
+          const initGame = chess.Game.empty()
+          .addPiece(Piece.fromString("P")!, Square.fromString("E4")!)
+          .addPiece(Piece.fromString("P")!, Square.fromString("F5")!)
+          .addPiece(Piece.fromString("P")!, Square.fromString("D5")!);
+
+          expect(game.move(Square.fromString("E4")!, Square.fromString("F5")!).equals(game)).toBe(true);
+          expect(game.move(Square.fromString("E4")!, Square.fromString("D5")!).equals(game)).toBe(true);
+        });
+      });
+
+      describe("diagonally, two squares ahead, from the 2nd file, to a square occupied by an opponent piece", () => {
+        it("does nothing", () => {
+          const initGame = chess.Game.empty()
+            .addPiece(Piece.fromString("P")!, Square.fromString("E2")!)
+            .addPiece(Piece.fromString("p")!, Square.fromString("C4")!);
+
+          expect(initGame.move(Square.fromString("E2")!, Square.fromString("C4")!)).toEqual(initGame);
+        });
+      });
+
+      describe("diagonally, behind, to an empty square", () => {
+        it("does nothing", () => {
+          const initGame = chess.Game.empty().addPiece(Piece.fromString("P")!, Square.fromString("E4")!);
+
+          expect(initGame.move(Square.fromString("E4")!, Square.fromString("F3")!)).toEqual(initGame);
+          expect(initGame.move(Square.fromString("E4")!, Square.fromString("B2")!)).toEqual(initGame);
+        });
       });
     });
   });

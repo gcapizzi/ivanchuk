@@ -3,7 +3,7 @@ import * as immutable from "immutable";
 import { Square } from "./square";
 import { Piece } from "./piece";
 
-export class Game {
+export class Game implements immutable.ValueObject {
   private board = immutable.Map<Square, Piece>();
 
   static empty(): Game {
@@ -46,6 +46,14 @@ export class Game {
       .addPiece(Piece.fromString("r")!, Square.fromString("H8")!);
   }
 
+  equals(other: Game): boolean {
+    return this.board.equals(other.board);
+  }
+
+  hashCode(): number {
+    return this.board.hashCode();
+  }
+
   addPiece(piece: Piece, square: Square): Game {
     return this.mapBoard((board) => board.set(square, piece));
   }
@@ -55,20 +63,55 @@ export class Game {
   }
 
   move(source: Square, destination: Square): Game {
-    const srcPiece = this.board.get(source)!;
+    if (this.board.get(source) === undefined) {
+      return this;
+    }
+
+    return this.moveWhitePawn(source, destination);
+  }
+
+  moveWhitePawn(source: Square, destination: Square): Game {
+    if (this.validateWhitePawnMove(destination, source)) {
+      return this.movePiece(source, destination);
+    }
+
+    return this;
+  }
+
+  private validateWhitePawnMove(destination: Square, source: Square) {
     const dstPiece = this.board.get(destination)!;
+    const fileDiff = destination.fileDiff(source);
 
-    if (srcPiece === undefined) {
-      return this;
+    if (this.verticalMove(source, destination) && dstPiece === undefined) {
+      if (source.file === Square.File._2 && fileDiff === 2) {
+        return true;
+      }
+
+      if (fileDiff === 1) {
+        return true;
+      }
     }
 
-    if (dstPiece === undefined || dstPiece.colour !== srcPiece.colour) {
-      return this.mapBoard((board) => {
-        return board.delete(source).set(destination, srcPiece);
-      });
-    } else {
-      return this;
+    if (this.diagonalMove(source, destination) && fileDiff === 1 && dstPiece !== undefined) {
+      return true;
     }
+
+    return false;
+  }
+
+  private verticalMove(source: Square, destination: Square): boolean {
+    return destination.columnDiff(source) === 0;
+  }
+
+  private diagonalMove(source: Square, destination: Square): boolean {
+    return Math.abs(destination.fileDiff(source)) === Math.abs(destination.columnDiff(source));
+  }
+
+  private movePiece(source: Square, destination: Square): Game {
+    return this.mapBoard((board) => {
+      const srcPiece = board.get(source)!;
+      return board.delete(source).set(destination, srcPiece);
+    });
   }
 
   private mapBoard(fn: (board: immutable.Map<Square, Piece>) => immutable.Map<Square, Piece>): Game {
