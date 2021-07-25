@@ -1,13 +1,13 @@
 import * as immutable from "immutable";
 
-import { Location } from "./location";
+import { Square } from "./square";
 import { Piece } from "./piece";
 
-export * from "./location";
+export * from "./square";
 export * from "./piece";
 
 export class Game {
-  public board = immutable.Map<Location, Piece>();
+  public board = immutable.Map<Square, Piece>();
 
   static empty(): Game {
     return new Game();
@@ -15,47 +15,47 @@ export class Game {
 
   static fromStartingPosition(): Game {
     return Game.empty()
-      .addPiece(Piece.fromString("R")!, Location.fromString("A1")!)
-      .addPiece(Piece.fromString("N")!, Location.fromString("B1")!)
-      .addPiece(Piece.fromString("B")!, Location.fromString("C1")!)
-      .addPiece(Piece.fromString("Q")!, Location.fromString("D1")!)
-      .addPiece(Piece.fromString("K")!, Location.fromString("E1")!)
-      .addPiece(Piece.fromString("B")!, Location.fromString("F1")!)
-      .addPiece(Piece.fromString("N")!, Location.fromString("G1")!)
-      .addPiece(Piece.fromString("R")!, Location.fromString("H1")!)
-      .addPiece(Piece.fromString("P")!, Location.fromString("A2")!)
-      .addPiece(Piece.fromString("P")!, Location.fromString("B2")!)
-      .addPiece(Piece.fromString("P")!, Location.fromString("C2")!)
-      .addPiece(Piece.fromString("P")!, Location.fromString("D2")!)
-      .addPiece(Piece.fromString("P")!, Location.fromString("E2")!)
-      .addPiece(Piece.fromString("P")!, Location.fromString("F2")!)
-      .addPiece(Piece.fromString("P")!, Location.fromString("G2")!)
-      .addPiece(Piece.fromString("P")!, Location.fromString("H2")!)
-      .addPiece(Piece.fromString("p")!, Location.fromString("A7")!)
-      .addPiece(Piece.fromString("p")!, Location.fromString("B7")!)
-      .addPiece(Piece.fromString("p")!, Location.fromString("C7")!)
-      .addPiece(Piece.fromString("p")!, Location.fromString("D7")!)
-      .addPiece(Piece.fromString("p")!, Location.fromString("E7")!)
-      .addPiece(Piece.fromString("p")!, Location.fromString("F7")!)
-      .addPiece(Piece.fromString("p")!, Location.fromString("G7")!)
-      .addPiece(Piece.fromString("p")!, Location.fromString("H7")!)
-      .addPiece(Piece.fromString("r")!, Location.fromString("A8")!)
-      .addPiece(Piece.fromString("n")!, Location.fromString("B8")!)
-      .addPiece(Piece.fromString("b")!, Location.fromString("C8")!)
-      .addPiece(Piece.fromString("q")!, Location.fromString("D8")!)
-      .addPiece(Piece.fromString("k")!, Location.fromString("E8")!)
-      .addPiece(Piece.fromString("b")!, Location.fromString("F8")!)
-      .addPiece(Piece.fromString("n")!, Location.fromString("G8")!)
-      .addPiece(Piece.fromString("r")!, Location.fromString("H8")!);
+      .addPiece(Piece.fromString("R")!, Square.fromString("A1")!)
+      .addPiece(Piece.fromString("N")!, Square.fromString("B1")!)
+      .addPiece(Piece.fromString("B")!, Square.fromString("C1")!)
+      .addPiece(Piece.fromString("Q")!, Square.fromString("D1")!)
+      .addPiece(Piece.fromString("K")!, Square.fromString("E1")!)
+      .addPiece(Piece.fromString("B")!, Square.fromString("F1")!)
+      .addPiece(Piece.fromString("N")!, Square.fromString("G1")!)
+      .addPiece(Piece.fromString("R")!, Square.fromString("H1")!)
+      .addPiece(Piece.fromString("P")!, Square.fromString("A2")!)
+      .addPiece(Piece.fromString("P")!, Square.fromString("B2")!)
+      .addPiece(Piece.fromString("P")!, Square.fromString("C2")!)
+      .addPiece(Piece.fromString("P")!, Square.fromString("D2")!)
+      .addPiece(Piece.fromString("P")!, Square.fromString("E2")!)
+      .addPiece(Piece.fromString("P")!, Square.fromString("F2")!)
+      .addPiece(Piece.fromString("P")!, Square.fromString("G2")!)
+      .addPiece(Piece.fromString("P")!, Square.fromString("H2")!)
+      .addPiece(Piece.fromString("p")!, Square.fromString("A7")!)
+      .addPiece(Piece.fromString("p")!, Square.fromString("B7")!)
+      .addPiece(Piece.fromString("p")!, Square.fromString("C7")!)
+      .addPiece(Piece.fromString("p")!, Square.fromString("D7")!)
+      .addPiece(Piece.fromString("p")!, Square.fromString("E7")!)
+      .addPiece(Piece.fromString("p")!, Square.fromString("F7")!)
+      .addPiece(Piece.fromString("p")!, Square.fromString("G7")!)
+      .addPiece(Piece.fromString("p")!, Square.fromString("H7")!)
+      .addPiece(Piece.fromString("r")!, Square.fromString("A8")!)
+      .addPiece(Piece.fromString("n")!, Square.fromString("B8")!)
+      .addPiece(Piece.fromString("b")!, Square.fromString("C8")!)
+      .addPiece(Piece.fromString("q")!, Square.fromString("D8")!)
+      .addPiece(Piece.fromString("k")!, Square.fromString("E8")!)
+      .addPiece(Piece.fromString("b")!, Square.fromString("F8")!)
+      .addPiece(Piece.fromString("n")!, Square.fromString("G8")!)
+      .addPiece(Piece.fromString("r")!, Square.fromString("H8")!);
   }
 
-  addPiece(piece: Piece, location: Location): Game {
+  addPiece(piece: Piece, square: Square): Game {
     const newGame = new Game();
-    newGame.board = this.board.set(location, piece);
+    newGame.board = this.board.set(square, piece);
     return newGame;
   }
 
-  getPieceAt(location: Location): Piece | undefined {
-    return this.board.get(location);
+  getPieceAt(square: Square): Piece | undefined {
+    return this.board.get(square);
   }
 }

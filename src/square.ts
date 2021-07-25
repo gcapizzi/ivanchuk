@@ -1,83 +1,83 @@
 import * as immutable from "immutable";
 
-export class Location implements immutable.ValueObject {
-    private column: Location.Column;
-    private file: Location.File;
+export class Square implements immutable.ValueObject {
+    private column: Square.Column;
+    private file: Square.File;
   
-    constructor(column: Location.Column, file: Location.File) {
+    constructor(column: Square.Column, file: Square.File) {
       this.column = column;
       this.file = file;
     }
   
-    static fromString(str: string): Location | undefined {
+    static fromString(str: string): Square | undefined {
       if (str.length != 2) {
         return undefined;
       }
   
-      let column: Location.Column;
+      let column: Square.Column;
       switch (str.toUpperCase()[0]) {
         case "A":
-          column = Location.Column.A;
+          column = Square.Column.A;
           break;
         case "B":
-          column = Location.Column.B;
+          column = Square.Column.B;
           break;
         case "C":
-          column = Location.Column.C;
+          column = Square.Column.C;
           break;
         case "D":
-          column = Location.Column.D;
+          column = Square.Column.D;
           break;
         case "E":
-          column = Location.Column.E;
+          column = Square.Column.E;
           break;
         case "F":
-          column = Location.Column.F;
+          column = Square.Column.F;
           break;
         case "G":
-          column = Location.Column.G;
+          column = Square.Column.G;
           break;
         case "H":
-          column = Location.Column.H;
+          column = Square.Column.H;
           break;
         default:
           return undefined;
       }
   
-      let file: Location.File;
+      let file: Square.File;
       switch (str.toUpperCase()[1]) {
         case "1":
-          file = Location.File._1;
+          file = Square.File._1;
           break;
         case "2":
-          file = Location.File._2;
+          file = Square.File._2;
           break;
         case "3":
-          file = Location.File._3;
+          file = Square.File._3;
           break;
         case "4":
-          file = Location.File._4;
+          file = Square.File._4;
           break;
         case "5":
-          file = Location.File._5;
+          file = Square.File._5;
           break;
         case "6":
-          file = Location.File._6;
+          file = Square.File._6;
           break;
         case "7":
-          file = Location.File._7;
+          file = Square.File._7;
           break;
         case "8":
-          file = Location.File._8;
+          file = Square.File._8;
           break;
         default:
           return undefined;
       }
   
-      return new Location(column, file);
+      return new Square(column, file);
     }
   
-    equals(other: Location): boolean {
+    equals(other: Square): boolean {
       return this.column === other.column && this.file === other.file;
     }
   
@@ -86,7 +86,7 @@ export class Location implements immutable.ValueObject {
     }
   }
   
-  export namespace Location {
+  export namespace Square {
     export enum Column {
       A,
       B,
