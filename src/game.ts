@@ -52,7 +52,7 @@ export class Game {
     return newGame;
   }
 
-  getPieceAt(square: Square): Piece | undefined {
+  getPiece(square: Square): Piece | undefined {
     return this.board.get(square);
   }
 }
