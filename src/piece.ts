@@ -1,8 +1,8 @@
 import * as immutable from "immutable";
 
 export class Piece implements immutable.ValueObject {
-  private colour: Piece.Colour;
-  private type: Piece.Type;
+  readonly colour: Piece.Colour;
+  readonly type: Piece.Type;
 
   constructor(colour: Piece.Colour, type: Piece.Type) {
     this.colour = colour;
