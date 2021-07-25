@@ -47,12 +47,33 @@ export class Game {
   }
 
   addPiece(piece: Piece, square: Square): Game {
-    const newGame = new Game();
-    newGame.board = this.board.set(square, piece);
-    return newGame;
+    return this.mapBoard((board) => board.set(square, piece));
   }
 
   getPiece(square: Square): Piece | undefined {
     return this.board.get(square);
+  }
+
+  move(source: Square, destination: Square): Game {
+    const srcPiece = this.board.get(source)!;
+    const dstPiece = this.board.get(destination)!;
+
+    if (srcPiece === undefined) {
+      return this;
+    }
+
+    if (dstPiece === undefined || dstPiece.colour !== srcPiece.colour) {
+      return this.mapBoard((board) => {
+        return board.delete(source).set(destination, srcPiece);
+      });
+    } else {
+      return this;
+    }
+  }
+
+  private mapBoard(fn: (board: immutable.Map<Square, Piece>) => immutable.Map<Square, Piece>): Game {
+    const newGame = new Game();
+    newGame.board = fn(this.board);
+    return newGame;
   }
 }

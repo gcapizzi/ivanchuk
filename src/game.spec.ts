@@ -1,4 +1,6 @@
 import * as chess from "./chess";
+import { Piece } from "./piece";
+import { Square } from "./square";
 
 describe("Game", () => {
   describe("empty", () => {
@@ -65,6 +67,44 @@ describe("Game", () => {
       expect(game.addPiece(whitePawn, a1).getPiece(a1)).toEqual(whitePawn);
       expect(game.addPiece(whitePawn, a1).getPiece(b2)).toBeUndefined();
       expect(game.addPiece(whitePawn, a1).addPiece(whitePawn, b2).getPiece(a1)).toEqual(whitePawn);
+    });
+  });
+
+  describe("move", () => {
+    const game = chess.Game.fromStartingPosition();
+
+    it("moves a piece from the source square to the destination square", () => {
+      const newGame = game.move(Square.fromString("E2")!, Square.fromString("E4")!);
+
+      expect(newGame.getPiece(Square.fromString("E2")!)).toBeUndefined();
+      expect(newGame.getPiece(Square.fromString("E4")!)).toEqual(Piece.fromString("P"));
+    });
+
+    describe("when the source square is empty", () => {
+      it("does nothing", () => {
+        const newGame = game.move(Square.fromString("E3")!, Square.fromString("E2")!);
+
+        expect(newGame.getPiece(Square.fromString("E2")!)).toEqual(Piece.fromString("P"));
+        expect(newGame.getPiece(Square.fromString("E3")!)).toBeUndefined();
+      });
+    });
+
+    describe("when the destination has an opposite colour piece", () => {
+      it("takes", () => {
+        const newGame = game.move(Square.fromString("E2")!, Square.fromString("E7")!);
+
+        expect(newGame.getPiece(Square.fromString("E2")!)).toBeUndefined();
+        expect(newGame.getPiece(Square.fromString("E7")!)).toEqual(Piece.fromString("P")!);
+      });
+    });
+
+    describe("when the destination has a same colour piece", () => {
+      it("does nothing", () => {
+        const newGame = game.move(Square.fromString("E2")!, Square.fromString("E1")!);
+
+        expect(newGame.getPiece(Square.fromString("E2")!)).toEqual(Piece.fromString("P")!);
+        expect(newGame.getPiece(Square.fromString("E1")!)).toEqual(Piece.fromString("K")!);
+      });
     });
   });
 });
