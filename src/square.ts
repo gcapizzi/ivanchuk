@@ -27,6 +27,10 @@ export class Square implements immutable.ValueObject {
     return new Square(column, file);
   }
 
+  toString(): string {
+    return columnStr(this.column) + fileStr(this.file);
+  }
+
   equals(other: Square): boolean {
     return this.column === other.column && this.file === other.file;
   }
@@ -113,4 +117,46 @@ function parseFile(str: string): Square.File | undefined {
     case "8":
       return Square.File._8;
   }
+}
+
+function columnStr(column: Square.Column): string {
+  switch (column) {
+    case Square.Column.A:
+      return "A";
+    case Square.Column.B:
+      return "B";
+    case Square.Column.C:
+      return "C";
+    case Square.Column.D:
+      return "D";
+    case Square.Column.E:
+      return "E";
+    case Square.Column.F:
+      return "F";
+    case Square.Column.G:
+      return "G";
+    case Square.Column.H:
+      return "H";
+  }
+}
+
+function fileStr(file: Square.File): string {
+    switch (file) {
+      case Square.File._1:
+        return "1";
+      case Square.File._2:
+        return "2";
+      case Square.File._3:
+        return "3";
+      case Square.File._4:
+        return "4";
+      case Square.File._5:
+        return "5";
+      case Square.File._6:
+        return "6";
+      case Square.File._7:
+        return "7";
+      case Square.File._8:
+        return "8";
+    }
 }
