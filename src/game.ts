@@ -54,6 +54,11 @@ export class Game implements immutable.ValueObject {
     return this.board.hashCode();
   }
 
+  // TODO test
+  toString(): string {
+    return this.board.toString();
+  }
+
   addPiece(piece: Piece, square: Square): Game {
     return this.mapBoard((board) => board.set(square, piece));
   }

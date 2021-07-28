@@ -27,6 +27,7 @@ export class Square implements immutable.ValueObject {
     return new Square(column, file);
   }
 
+  // TODO test
   toString(): string {
     return columnStr(this.column) + fileStr(this.file);
   }
@@ -44,6 +45,7 @@ export class Square implements immutable.ValueObject {
     return this.file - other.file;
   }
 
+  // TODO test
   columnDiff(other: Square): number {
     return this.column - other.column;
   }

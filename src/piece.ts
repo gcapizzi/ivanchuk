@@ -47,6 +47,31 @@ export class Piece implements immutable.ValueObject {
   hashCode(): number {
     return this.colour * 10 + this.type;
   }
+
+  // TODO test
+  toString(): string {
+    let str;
+    switch (this.type) {
+      case Piece.Type.PAWN:
+        str = "P"; break;
+      case Piece.Type.KNIGHT:
+        str = "N"; break;
+      case Piece.Type.BISHOP:
+        str = "B"; break;
+      case Piece.Type.ROOK:
+        str = "R"; break;
+      case Piece.Type.QUEEN:
+        str = "Q"; break;
+      case Piece.Type.KING:
+        str = "K"; break;
+    }
+
+    if (this.colour == Piece.Colour.BLACK) {
+      return str.toLowerCase();
+    }
+
+    return str;
+  }
 }
 
 export namespace Piece {
