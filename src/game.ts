@@ -84,6 +84,7 @@ export class Game implements immutable.ValueObject {
   }
 
   private validateWhitePawnMove(destination: Square, source: Square) {
+    const srcPiece = this.board.get(source)!;
     const dstPiece = this.board.get(destination)!;
     const fileDiff = destination.fileDiff(source);
 
@@ -97,7 +98,12 @@ export class Game implements immutable.ValueObject {
       }
     }
 
-    if (this.diagonalMove(source, destination) && fileDiff === 1 && dstPiece !== undefined) {
+    if (
+      this.diagonalMove(source, destination) &&
+      fileDiff === 1 &&
+      dstPiece !== undefined &&
+      dstPiece.colour != srcPiece.colour
+    ) {
       return true;
     }
 

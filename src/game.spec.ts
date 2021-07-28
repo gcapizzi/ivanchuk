@@ -2,6 +2,8 @@ import * as chess from "./chess";
 import { Piece } from "./piece";
 import { Square } from "./square";
 
+import { checkAllowedMoves, newGame } from "./spec_utils";
+
 describe("Game", () => {
   describe("empty", () => {
     it("returns a Game with no pieces", () => {
@@ -90,116 +92,25 @@ describe("Game", () => {
   });
 
   describe("move", () => {
-    const game = chess.Game.fromStartingPosition();
-
-    describe("when the source square is empty", () => {
-      it("does nothing", () => {
-        expect(game.move(Square.fromString("E3")!, Square.fromString("E4")!).equals(game)).toBe(true);
-      });
-    });
-
-    describe("when moving a white pawn", () => {
-      describe("vertically, one square ahead", () => {
-        it("moves it", () => {
-          const newGame = game.move(Square.fromString("E2")!, Square.fromString("E3")!);
-
-          expect(newGame.getPiece(Square.fromString("E2")!)).toBeUndefined();
-          expect(newGame.getPiece(Square.fromString("E3")!)).toEqual(Piece.fromString("P")!);
-        });
-      });
-
-      describe("vertically, two squares ahead, from the 2nd file", () => {
-        it("moves it", () => {
-          const newGame = game.move(Square.fromString("E2")!, Square.fromString("E4")!);
-
-          expect(newGame.getPiece(Square.fromString("E2")!)).toBeUndefined();
-          expect(newGame.getPiece(Square.fromString("E4")!)).toEqual(Piece.fromString("P")!);
-        });
-      });
-
-      describe("vertically, two squares ahead, from a different file", () => {
-        it("does nothing", () => {
-          const initGame = game.move(Square.fromString("E2")!, Square.fromString("E3")!);
-
-          expect(initGame.move(Square.fromString("E3")!, Square.fromString("E5")!).equals(initGame)).toBe(true);
-        });
-      });
-
-      describe("vertically, ahead, to an occupied square", () => {
-        it("does nothing", () => {
-          const initGame = chess.Game.empty()
-            .addPiece(Piece.fromString("P")!, Square.fromString("E2")!)
-            .addPiece(Piece.fromString("P")!, Square.fromString("E4")!)
-            .addPiece(Piece.fromString("P")!, Square.fromString("E5")!);
-
-          expect(initGame.move(Square.fromString("E2")!, Square.fromString("E4")!).equals(initGame)).toBe(true);
-          expect(initGame.move(Square.fromString("E4")!, Square.fromString("E5")!).equals(initGame)).toBe(true);
-        });
-      });
-
-      describe("vertically, behind", () => {
-        it("does nothing", () => {
-          const initGame = game.move(Square.fromString("E2")!, Square.fromString("E4")!);
-
-          expect(initGame.move(Square.fromString("E4")!, Square.fromString("E3")!).equals(initGame)).toBe(true);
-          expect(initGame.move(Square.fromString("E4")!, Square.fromString("E2")!).equals(initGame)).toBe(true);
-        });
-      });
-
-      describe("diagonally, ahead, to an empty square", () => {
-        it("does nothing", () => {
-          expect(game.move(Square.fromString("E2")!, Square.fromString("D3")!).equals(game)).toBe(true);
-          expect(game.move(Square.fromString("E2")!, Square.fromString("F4")!).equals(game)).toBe(true);
-        });
-      });
-
-      describe("diagonally, one square ahead, to a square occupied by an opponent piece", () => {
-        it("takes", () => {
-          const initGame = chess.Game.empty()
-            .addPiece(Piece.fromString("P")!, Square.fromString("E4")!)
-            .addPiece(Piece.fromString("p")!, Square.fromString("F5")!)
-            .addPiece(Piece.fromString("p")!, Square.fromString("D5")!);
-
-          let newGame = initGame.move(Square.fromString("E4")!, Square.fromString("D5")!);
-          expect(newGame.getPiece(Square.fromString("E4")!)).toBeUndefined();
-          expect(newGame.getPiece(Square.fromString("D5")!)).toEqual(Piece.fromString("P")!);
-
-          newGame = initGame.move(Square.fromString("E4")!, Square.fromString("F5")!);
-          expect(newGame.getPiece(Square.fromString("E4")!)).toBeUndefined();
-          expect(newGame.getPiece(Square.fromString("F5")!)).toEqual(Piece.fromString("P")!);
-        });
-      });
-
-      describe("diagonally, one square ahead, to a square occupied by an own piece", () => {
-        it("does nothing", () => {
-          const initGame = chess.Game.empty()
-          .addPiece(Piece.fromString("P")!, Square.fromString("E4")!)
-          .addPiece(Piece.fromString("P")!, Square.fromString("F5")!)
-          .addPiece(Piece.fromString("P")!, Square.fromString("D5")!);
-
-          expect(game.move(Square.fromString("E4")!, Square.fromString("F5")!).equals(game)).toBe(true);
-          expect(game.move(Square.fromString("E4")!, Square.fromString("D5")!).equals(game)).toBe(true);
-        });
-      });
-
-      describe("diagonally, two squares ahead, from the 2nd file, to a square occupied by an opponent piece", () => {
-        it("does nothing", () => {
-          const initGame = chess.Game.empty()
-            .addPiece(Piece.fromString("P")!, Square.fromString("E2")!)
-            .addPiece(Piece.fromString("p")!, Square.fromString("C4")!);
-
-          expect(initGame.move(Square.fromString("E2")!, Square.fromString("C4")!)).toEqual(initGame);
-        });
-      });
-
-      describe("diagonally, behind, to an empty square", () => {
-        it("does nothing", () => {
-          const initGame = chess.Game.empty().addPiece(Piece.fromString("P")!, Square.fromString("E4")!);
-
-          expect(initGame.move(Square.fromString("E4")!, Square.fromString("F3")!)).toEqual(initGame);
-          expect(initGame.move(Square.fromString("E4")!, Square.fromString("B2")!)).toEqual(initGame);
-        });
-      });
+    describe("pawns", () => {
+      const game = newGame(["P", "f2"], ["P", "e3"]);
+      checkAllowedMoves(game, "f2", ["f3", "f4"]);
+      checkAllowedMoves(game, "e3", ["e4"]);
+      checkAllowedMoves(
+        newGame(
+          ["P", "b3"],
+          ["p", "b4"],
+          ["p", "c4"],
+          ["p", "c3"],
+          ["p", "c2"],
+          ["p", "b2"],
+          ["p", "a2"],
+          ["p", "a3"],
+          ["p", "a4"]
+        ),
+        "b3",
+        ["a4", "c4"]
+      );
     });
   });
 });
