@@ -40,14 +40,18 @@ export class Square implements immutable.ValueObject {
     return this.column * 10 + this.file;
   }
 
-  // TODO test
-  fileDiff(other: Square): number {
-    return this.file - other.file;
+  addFile(n: number): Square | undefined {
+    const newFile = this.file + n;
+    if (newFile >= 0 && newFile <= 7) {
+      return new Square(this.column, newFile);
+    }
   }
 
-  // TODO test
-  columnDiff(other: Square): number {
-    return this.column - other.column;
+  addColumn(n: number): Square | undefined {
+    const newColumn = this.column + n;
+    if (newColumn >= 0 && newColumn <= 7) {
+      return new Square(newColumn, this.file);
+    }
   }
 }
 
@@ -143,22 +147,22 @@ function columnStr(column: Square.Column): string {
 }
 
 function fileStr(file: Square.File): string {
-    switch (file) {
-      case Square.File._1:
-        return "1";
-      case Square.File._2:
-        return "2";
-      case Square.File._3:
-        return "3";
-      case Square.File._4:
-        return "4";
-      case Square.File._5:
-        return "5";
-      case Square.File._6:
-        return "6";
-      case Square.File._7:
-        return "7";
-      case Square.File._8:
-        return "8";
-    }
+  switch (file) {
+    case Square.File._1:
+      return "1";
+    case Square.File._2:
+      return "2";
+    case Square.File._3:
+      return "3";
+    case Square.File._4:
+      return "4";
+    case Square.File._5:
+      return "5";
+    case Square.File._6:
+      return "6";
+    case Square.File._7:
+      return "7";
+    case Square.File._8:
+      return "8";
+  }
 }

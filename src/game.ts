@@ -72,50 +72,46 @@ export class Game implements immutable.ValueObject {
       return this;
     }
 
-    return this.moveWhitePawn(source, destination);
-  }
-
-  moveWhitePawn(source: Square, destination: Square): Game {
-    if (this.validateWhitePawnMove(destination, source)) {
+    if (this.validDestinations(source).includes(destination)) {
       return this.movePiece(source, destination);
     }
 
     return this;
   }
 
-  private validateWhitePawnMove(destination: Square, source: Square) {
-    const srcPiece = this.board.get(source)!;
-    const dstPiece = this.board.get(destination)!;
-    const fileDiff = destination.fileDiff(source);
+  // TODO consider withMutations
+  private validDestinations(source: Square): immutable.Set<Square> {
+    let destinations = immutable.Set<Square>();
 
-    if (this.verticalMove(source, destination) && dstPiece === undefined) {
-      if (source.file === Square.File._2 && fileDiff === 2) {
-        return true;
-      }
+    const frontSq = source.addFile(1);
+    if (frontSq !== undefined && this.getPiece(frontSq) === undefined) {
+      destinations = destinations.add(frontSq);
+    }
 
-      if (fileDiff === 1) {
-        return true;
+    if (source.file === Square.File._2) {
+      const secondFrontSq = source.addFile(2);
+      if (secondFrontSq !== undefined && this.getPiece(secondFrontSq) === undefined) {
+        destinations = destinations.add(secondFrontSq);
       }
     }
 
-    if (
-      this.diagonalMove(source, destination) &&
-      fileDiff === 1 &&
-      dstPiece !== undefined &&
-      dstPiece.colour != srcPiece.colour
-    ) {
-      return true;
+    const leftDiagonalSq = source.addFile(1)?.addColumn(-1);
+    if (leftDiagonalSq !== undefined) {
+      const leftDiagonalPiece = this.getPiece(leftDiagonalSq);
+      if (leftDiagonalPiece !== undefined && leftDiagonalPiece.colour === Piece.Colour.BLACK) {
+        destinations = destinations.add(leftDiagonalSq);
+      }
     }
 
-    return false;
-  }
+    const rightDiagonalSq = source.addFile(1)?.addColumn(1);
+    if (rightDiagonalSq !== undefined) {
+      const rightDiagonalPiece = this.getPiece(rightDiagonalSq);
+      if (rightDiagonalPiece !== undefined && rightDiagonalPiece.colour === Piece.Colour.BLACK) {
+        destinations = destinations.add(rightDiagonalSq);
+      }
+    }
 
-  private verticalMove(source: Square, destination: Square): boolean {
-    return destination.columnDiff(source) === 0;
-  }
-
-  private diagonalMove(source: Square, destination: Square): boolean {
-    return Math.abs(destination.fileDiff(source)) === Math.abs(destination.columnDiff(source));
+    return destinations;
   }
 
   private movePiece(source: Square, destination: Square): Game {

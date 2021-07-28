@@ -93,24 +93,26 @@ describe("Game", () => {
 
   describe("move", () => {
     describe("pawns", () => {
-      const game = newGame(["P", "f2"], ["P", "e3"]);
-      checkAllowedMoves(game, "f2", ["f3", "f4"]);
-      checkAllowedMoves(game, "e3", ["e4"]);
-      checkAllowedMoves(
-        newGame(
-          ["P", "b3"],
-          ["p", "b4"],
-          ["p", "c4"],
-          ["p", "c3"],
-          ["p", "c2"],
-          ["p", "b2"],
-          ["p", "a2"],
-          ["p", "a3"],
-          ["p", "a4"]
-        ),
-        "b3",
-        ["a4", "c4"]
-      );
+      it("moves the pawn", () => {
+        const game = newGame(["P", "f2"], ["P", "e3"]);
+        checkAllowedMoves(game, "f2", ["f3", "f4"]);
+        checkAllowedMoves(game, "e3", ["e4"]);
+        checkAllowedMoves(
+          newGame(
+            ["P", "b3"],
+            ["p", "b4"],
+            ["p", "c4"],
+            ["p", "c3"],
+            ["p", "c2"],
+            ["p", "b2"],
+            ["p", "a2"],
+            ["p", "a3"],
+            ["p", "a4"]
+          ),
+          "b3",
+          ["a4", "c4"]
+        );
+      });
     });
   });
 });
