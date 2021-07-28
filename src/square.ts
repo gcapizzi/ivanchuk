@@ -14,64 +14,14 @@ export class Square implements immutable.ValueObject {
       return undefined;
     }
 
-    let column: Square.Column;
-    switch (str.toUpperCase()[0]) {
-      case "A":
-        column = Square.Column.A;
-        break;
-      case "B":
-        column = Square.Column.B;
-        break;
-      case "C":
-        column = Square.Column.C;
-        break;
-      case "D":
-        column = Square.Column.D;
-        break;
-      case "E":
-        column = Square.Column.E;
-        break;
-      case "F":
-        column = Square.Column.F;
-        break;
-      case "G":
-        column = Square.Column.G;
-        break;
-      case "H":
-        column = Square.Column.H;
-        break;
-      default:
-        return undefined;
+    const column = parseColumn(str[0]);
+    if (column === undefined) {
+      return undefined;
     }
 
-    let file: Square.File;
-    switch (str.toUpperCase()[1]) {
-      case "1":
-        file = Square.File._1;
-        break;
-      case "2":
-        file = Square.File._2;
-        break;
-      case "3":
-        file = Square.File._3;
-        break;
-      case "4":
-        file = Square.File._4;
-        break;
-      case "5":
-        file = Square.File._5;
-        break;
-      case "6":
-        file = Square.File._6;
-        break;
-      case "7":
-        file = Square.File._7;
-        break;
-      case "8":
-        file = Square.File._8;
-        break;
-      default:
-        return undefined;
+    const file = parseFile(str[1]);
+    if (file === undefined) {
+      return undefined;
     }
 
     return new Square(column, file);
@@ -121,4 +71,46 @@ export namespace Square {
   }
 
   export const Files = [File._1, File._2, File._3, File._4, File._4, File._5, File._6, File._7, File._8];
+}
+
+function parseColumn(str: string): Square.Column | undefined {
+  switch (str.toUpperCase()) {
+    case "A":
+      return Square.Column.A;
+    case "B":
+      return Square.Column.B;
+    case "C":
+      return Square.Column.C;
+    case "D":
+      return Square.Column.D;
+    case "E":
+      return Square.Column.E;
+    case "F":
+      return Square.Column.F;
+    case "G":
+      return Square.Column.G;
+    case "H":
+      return Square.Column.H;
+  }
+}
+
+function parseFile(str: string): Square.File | undefined {
+  switch (str) {
+    case "1":
+      return Square.File._1;
+    case "2":
+      return Square.File._2;
+    case "3":
+      return Square.File._3;
+    case "4":
+      return Square.File._4;
+    case "5":
+      return Square.File._5;
+    case "6":
+      return Square.File._6;
+    case "7":
+      return Square.File._7;
+    case "8":
+      return Square.File._8;
+  }
 }
