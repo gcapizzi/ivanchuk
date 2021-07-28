@@ -17,7 +17,7 @@ describe("Game", () => {
 
   describe("fromStartingPosition", () => {
     it("returns a Game from the starting position", () => {
-      const game = chess.Game.fromStartingPosition();
+      const game = chess.Game.startingPosition();
 
       expect(game.getPiece(chess.Square.fromString("a1")!)).toEqual(chess.Piece.fromString("R"));
       expect(game.getPiece(chess.Square.fromString("b1")!)).toEqual(chess.Piece.fromString("N"));

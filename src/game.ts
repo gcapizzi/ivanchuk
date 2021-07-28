@@ -10,7 +10,7 @@ export class Game implements immutable.ValueObject {
     return new Game();
   }
 
-  static fromStartingPosition(): Game {
+  static startingPosition(): Game {
     return Game.empty()
       .addPiece(Piece.fromString("R")!, Square.fromString("A1")!)
       .addPiece(Piece.fromString("N")!, Square.fromString("B1")!)
