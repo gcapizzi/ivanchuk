@@ -4,12 +4,6 @@ import { Game } from "./game";
 import { Piece } from "./piece";
 import { Square } from "./square";
 
-export function newGame(...pieces: Array<[string, string]>) {
-  return pieces.reduce<chess.Game>((game, [piece, square]) => {
-    return game.addPiece(Piece.fromString(piece)!, Square.fromString(square)!);
-  }, chess.Game.empty());
-}
-
 export function checkAllowedMoves(game: Game, from: string, to: Array<string>) {
   const source = Square.fromString(from)!;
   const piece = game.getPiece(source)!;
@@ -40,6 +34,28 @@ export function checkAllowedMoves(game: Game, from: string, to: Array<string>) {
           throw new Error(`Move was allowed: ${moveStr} (resulting in: ${game.toString()} -> ${newGame.toString()})`);
         }
       }
+    }
+  }
+}
+
+expect.extend({
+  toEqualValue<E extends immutable.ValueObject>(got: E, expected: E) {
+    let pass = got.equals(expected);
+    let message = () => {
+      if (pass) {
+        return `${got} should not be equal to ${expected}`
+      } else {
+        return `${got} should be equal to ${expected}`
+      }
+    };
+    return { pass, message };
+  },
+});
+
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toEqualValue<E extends immutable.ValueObject>(expected: E): R;
     }
   }
 }

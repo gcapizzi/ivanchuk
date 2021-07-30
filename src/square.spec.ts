@@ -1,4 +1,5 @@
 import * as chess from "./chess";
+import "./spec_utils";
 
 describe("Square", () => {
   describe("fromString", () => {
@@ -35,8 +36,8 @@ describe("Square", () => {
 
   describe("addFile", () => {
     it("returns a new square n files ahead (or behind if negative", () => {
-      expect(chess.Square.fromString("e2")?.addFile(2)?.equals(chess.Square.fromString("e4")!)).toBe(true);
-      expect(chess.Square.fromString("e5")?.addFile(-3)?.equals(chess.Square.fromString("e2")!)).toBe(true);
+      expect(chess.Square.fromString("e2")?.addFile(2)).toEqualValue(chess.Square.fromString("e4")!);
+      expect(chess.Square.fromString("e5")?.addFile(-3)).toEqualValue(chess.Square.fromString("e2")!);
       expect(chess.Square.fromString("e8")?.addFile(1)).toBeUndefined();
       expect(chess.Square.fromString("e1")?.addFile(-1)).toBeUndefined();
     });
@@ -44,8 +45,8 @@ describe("Square", () => {
 
   describe("addColumn", () => {
     it("returns a new square n columns right (or left if negative", () => {
-      expect(chess.Square.fromString("e2")?.addColumn(2)?.equals(chess.Square.fromString("g2")!)).toBe(true);
-      expect(chess.Square.fromString("e5")?.addColumn(-3)?.equals(chess.Square.fromString("b5")!)).toBe(true);
+      expect(chess.Square.fromString("e2")?.addColumn(2)).toEqualValue(chess.Square.fromString("g2")!);
+      expect(chess.Square.fromString("e5")?.addColumn(-3)).toEqualValue(chess.Square.fromString("b5")!);
       expect(chess.Square.fromString("h1")?.addColumn(1)).toBeUndefined();
       expect(chess.Square.fromString("a1")?.addColumn(-1)).toBeUndefined();
     });

@@ -1,8 +1,9 @@
 import * as chess from "./chess";
+import * as fen from "./fen";
 import { Piece } from "./piece";
 import { Square } from "./square";
 
-import { checkAllowedMoves, newGame } from "./spec_utils";
+import { checkAllowedMoves } from "./spec_utils";
 
 describe("Game", () => {
   describe("empty", () => {
@@ -19,43 +20,7 @@ describe("Game", () => {
 
   describe("fromStartingPosition", () => {
     it("returns a Game from the starting position", () => {
-      const game = chess.Game.startingPosition();
-
-      expect(game.getPiece(chess.Square.fromString("a1")!)).toEqual(chess.Piece.fromString("R"));
-      expect(game.getPiece(chess.Square.fromString("b1")!)).toEqual(chess.Piece.fromString("N"));
-      expect(game.getPiece(chess.Square.fromString("c1")!)).toEqual(chess.Piece.fromString("B"));
-      expect(game.getPiece(chess.Square.fromString("d1")!)).toEqual(chess.Piece.fromString("Q"));
-      expect(game.getPiece(chess.Square.fromString("e1")!)).toEqual(chess.Piece.fromString("K"));
-      expect(game.getPiece(chess.Square.fromString("f1")!)).toEqual(chess.Piece.fromString("B"));
-      expect(game.getPiece(chess.Square.fromString("g1")!)).toEqual(chess.Piece.fromString("N"));
-      expect(game.getPiece(chess.Square.fromString("h1")!)).toEqual(chess.Piece.fromString("R"));
-
-      for (let loc of ["a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2"]) {
-        expect(game.getPiece(chess.Square.fromString(loc)!)).toEqual(chess.Piece.fromString("P"));
-      }
-
-      // prettier-ignore
-      for (let loc of [
-        "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
-        "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
-        "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
-        "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"
-      ]) {
-        expect(game.getPiece(chess.Square.fromString(loc)!)).toBeUndefined();
-      }
-
-      for (let loc of ["a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7"]) {
-        expect(game.getPiece(chess.Square.fromString(loc)!)).toEqual(chess.Piece.fromString("p"));
-      }
-
-      expect(game.getPiece(chess.Square.fromString("a8")!)).toEqual(chess.Piece.fromString("r"));
-      expect(game.getPiece(chess.Square.fromString("b8")!)).toEqual(chess.Piece.fromString("n"));
-      expect(game.getPiece(chess.Square.fromString("c8")!)).toEqual(chess.Piece.fromString("b"));
-      expect(game.getPiece(chess.Square.fromString("d8")!)).toEqual(chess.Piece.fromString("q"));
-      expect(game.getPiece(chess.Square.fromString("e8")!)).toEqual(chess.Piece.fromString("k"));
-      expect(game.getPiece(chess.Square.fromString("f8")!)).toEqual(chess.Piece.fromString("b"));
-      expect(game.getPiece(chess.Square.fromString("g8")!)).toEqual(chess.Piece.fromString("n"));
-      expect(game.getPiece(chess.Square.fromString("h8")!)).toEqual(chess.Piece.fromString("r"));
+      expect(chess.Game.startingPosition()).toEqualValue(fen.parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")!);
     });
   });
 
@@ -96,31 +61,17 @@ describe("Game", () => {
       const game = chess.Game.startingPosition();
       const e2 = Square.fromString("e2")!;
       expect(game.removePiece(e2).getPiece(e2)).toBeUndefined();
-      expect(game.removePiece(Square.fromString("e4")!).equals(game)).toBe(true);
+      expect(game.removePiece(Square.fromString("e4")!)).toEqualValue(game);
     });
   });
 
   describe("move", () => {
     describe("pawns", () => {
       it("moves the pawn", () => {
-        const game = newGame(["P", "f2"], ["P", "e3"]);
+        const game = fen.parse("8/8/8/8/8/4P3/5P2/8")!;
         checkAllowedMoves(game, "f2", ["f3", "f4"]);
         checkAllowedMoves(game, "e3", ["e4"]);
-        checkAllowedMoves(
-          newGame(
-            ["P", "b3"],
-            ["p", "b4"],
-            ["p", "c4"],
-            ["p", "c3"],
-            ["p", "c2"],
-            ["p", "b2"],
-            ["p", "a2"],
-            ["p", "a3"],
-            ["p", "a4"]
-          ),
-          "b3",
-          ["a4", "c4"]
-        );
+        checkAllowedMoves(fen.parse("8/8/8/8/ppp5/pPp5/ppp5/8")!, "b3", ["a4", "c4"]);
       });
     });
   });
