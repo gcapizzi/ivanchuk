@@ -67,6 +67,10 @@ export class Game implements immutable.ValueObject {
     return this.board.get(square);
   }
 
+  removePiece(square: Square): Game {
+    return this.mapBoard((board) => board.delete(square));
+  }
+
   move(source: Square, destination: Square): Game {
     if (this.board.get(source) === undefined) {
       return this;

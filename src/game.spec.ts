@@ -81,13 +81,22 @@ describe("Game", () => {
   describe("addPiece", () => {
     it("returns a new Game with the provided piece added to the provided square", () => {
       const game = chess.Game.empty();
-      const whitePawn = new chess.Piece(chess.Piece.Colour.WHITE, chess.Piece.Type.PAWN);
-      const a1 = new chess.Square(chess.Square.Column.A, chess.Square.File._1);
-      const b2 = new chess.Square(chess.Square.Column.B, chess.Square.File._2);
+      const whitePawn = chess.Piece.fromString("P")!;
+      const a1 = chess.Square.fromString("A1")!;
+      const b2 = chess.Square.fromString("B2")!;
 
       expect(game.addPiece(whitePawn, a1).getPiece(a1)).toEqual(whitePawn);
       expect(game.addPiece(whitePawn, a1).getPiece(b2)).toBeUndefined();
       expect(game.addPiece(whitePawn, a1).addPiece(whitePawn, b2).getPiece(a1)).toEqual(whitePawn);
+    });
+  });
+
+  describe("removePiece", () => {
+    it("returns a new Game with the piece on the provided square removed", () => {
+      const game = chess.Game.startingPosition();
+      const e2 = Square.fromString("e2")!;
+      expect(game.removePiece(e2).getPiece(e2)).toBeUndefined();
+      expect(game.removePiece(Square.fromString("e4")!).equals(game)).toBe(true);
     });
   });
 
