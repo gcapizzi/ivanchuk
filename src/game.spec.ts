@@ -68,10 +68,15 @@ describe("Game", () => {
   describe("move", () => {
     describe("pawns", () => {
       it("moves the pawn", () => {
-        const game = fen.parse("8/8/8/8/8/4P3/5P2/8")!;
+        let game = fen.parse("8/5p2/4p3/8/8/4P3/5P2/8")!;
         checkAllowedMoves(game, "f2", ["f3", "f4"]);
         checkAllowedMoves(game, "e3", ["e4"]);
-        checkAllowedMoves(fen.parse("8/8/8/8/ppp5/pPp5/ppp5/8")!, "b3", ["a4", "c4"]);
+        checkAllowedMoves(game, "f7", ["f6", "f5"]);
+        checkAllowedMoves(game, "e6", ["e5"]);
+
+        game = fen.parse("8/PPP5/PpP5/PPP5/ppp5/pPp5/ppp5/8")!;
+        checkAllowedMoves(game, "b3", ["a4", "c4"]);
+        checkAllowedMoves(game, "b6", ["a5", "c5"]);
       });
     });
   });

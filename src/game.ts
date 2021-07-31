@@ -85,35 +85,28 @@ export class Game implements immutable.ValueObject {
 
   // TODO consider withMutations
   private validDestinations(source: Square): immutable.Set<Square> {
+    const piece = this.getPiece(source);
+    if (piece === undefined) {
+      return immutable.Set();
+    }
+
+    let initialFile = Square.File._2;
+    let oppositeColour = Piece.Colour.BLACK;
+    let fileMultiplier = 1;
+    if (piece.colour === Piece.Colour.BLACK) {
+      initialFile = Square.File._7;
+      oppositeColour = Piece.Colour.WHITE;
+      fileMultiplier = -1;
+    }
+
     let destinations = immutable.Set<Square>();
 
-    const frontSq = source.addFile(1);
-    if (frontSq !== undefined && this.getPiece(frontSq) === undefined) {
-      destinations = destinations.add(frontSq);
+    this.destination(source, 1 * fileMultiplier, 0).ifEmpty((s) => (destinations = destinations.add(s)));
+    if (source.file === initialFile) {
+      this.destination(source, 2 * fileMultiplier, 0).ifEmpty((s) => (destinations = destinations.add(s)));
     }
-
-    if (source.file === Square.File._2) {
-      const secondFrontSq = source.addFile(2);
-      if (secondFrontSq !== undefined && this.getPiece(secondFrontSq) === undefined) {
-        destinations = destinations.add(secondFrontSq);
-      }
-    }
-
-    const leftDiagonalSq = source.addFile(1)?.addColumn(-1);
-    if (leftDiagonalSq !== undefined) {
-      const leftDiagonalPiece = this.getPiece(leftDiagonalSq);
-      if (leftDiagonalPiece !== undefined && leftDiagonalPiece.colour === Piece.Colour.BLACK) {
-        destinations = destinations.add(leftDiagonalSq);
-      }
-    }
-
-    const rightDiagonalSq = source.addFile(1)?.addColumn(1);
-    if (rightDiagonalSq !== undefined) {
-      const rightDiagonalPiece = this.getPiece(rightDiagonalSq);
-      if (rightDiagonalPiece !== undefined && rightDiagonalPiece.colour === Piece.Colour.BLACK) {
-        destinations = destinations.add(rightDiagonalSq);
-      }
-    }
+    this.destination(source, 1 * fileMultiplier, -1).ifPiece(oppositeColour, (s) => (destinations = destinations.add(s)));
+    this.destination(source, 1 * fileMultiplier, 1).ifPiece(oppositeColour, (s) => (destinations = destinations.add(s)));
 
     return destinations;
   }
@@ -129,5 +122,36 @@ export class Game implements immutable.ValueObject {
     const newGame = new Game();
     newGame.board = fn(this.board);
     return newGame;
+  }
+
+  private destination(square: Square, deltaFile: number, deltaColumn: number): MaybeSquare {
+    const dest = square.addFile(deltaFile)?.addColumn(deltaColumn);
+    let piece: Piece | undefined;
+    if (dest !== undefined) {
+      piece = this.getPiece(dest);
+    }
+    return new MaybeSquare(dest, piece);
+  }
+}
+
+class MaybeSquare {
+  private square: Square | undefined;
+  private piece: Piece | undefined;
+
+  constructor(square: Square | undefined, piece: Piece | undefined) {
+    this.square = square;
+    this.piece = piece;
+  }
+
+  ifEmpty(fn: (s: Square) => void) {
+    if (this.square !== undefined && this.piece === undefined) {
+      fn(this.square);
+    }
+  }
+
+  ifPiece(colour: Piece.Colour, fn: (s: Square) => void) {
+    if (this.square !== undefined && this.piece !== undefined && this.piece.colour === colour) {
+      fn(this.square);
+    }
   }
 }
