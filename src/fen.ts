@@ -1,9 +1,14 @@
 import * as chess from "./chess";
 
+// TODO handle invalid strings
 export function parse(fen: string): chess.Game | undefined {
   let game = chess.Game.empty();
-  const files = fen.split("/");
+  const [board, nextToMove] = fen.split(" ");
+  if (nextToMove.toLowerCase() === "b") {
+    game = game.withNextToMove(chess.Piece.Colour.BLACK);
+  }
 
+  const files = board.split("/");
   let file = chess.Square.File._8;
   for (let f of files) {
     let col = chess.Square.Column.A;

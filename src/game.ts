@@ -5,6 +5,7 @@ import { Piece } from "./piece";
 
 export class Game implements immutable.ValueObject {
   private board = immutable.Map<Square, Piece>();
+  private nextToMove = Piece.Colour.WHITE;
 
   static empty(): Game {
     return new Game();
@@ -47,7 +48,7 @@ export class Game implements immutable.ValueObject {
   }
 
   equals(other: Game): boolean {
-    return this.board.equals(other.board);
+    return this.board.equals(other.board) && this.nextToMove === other.nextToMove;
   }
 
   hashCode(): number {
@@ -71,6 +72,17 @@ export class Game implements immutable.ValueObject {
     return this.mapBoard((board) => board.delete(square));
   }
 
+  withNextToMove(nextToMove: Piece.Colour): Game {
+    const newGame = new Game();
+    newGame.board = this.board;
+    newGame.nextToMove = nextToMove;
+    return newGame;
+  }
+
+  getNextToMove(): Piece.Colour {
+    return this.nextToMove;
+  }
+
   move(source: Square, destination: Square): Game {
     if (this.validDestinations(source).includes(destination)) {
       return this.movePiece(source, destination);
@@ -80,29 +92,20 @@ export class Game implements immutable.ValueObject {
   }
 
   // TODO consider withMutations
-  private validDestinations(source: Square): immutable.Set<Square> {
+  validDestinations(source: Square): immutable.Set<Square> {
     const piece = this.getPiece(source);
-    if (piece === undefined) {
+    if (piece === undefined || piece.colour !== this.nextToMove) {
       return immutable.Set();
-    }
-
-    let initialFile = Square.File._2;
-    let oppositeColour = Piece.Colour.BLACK;
-    let fileMultiplier = 1;
-    if (piece.colour === Piece.Colour.BLACK) {
-      initialFile = Square.File._7;
-      oppositeColour = Piece.Colour.WHITE;
-      fileMultiplier = -1;
     }
 
     let destinations = immutable.Set<Square>();
 
-    this.destination(source, 1 * fileMultiplier, 0).ifEmpty((s) => (destinations = destinations.add(s)));
-    if (source.file === initialFile) {
-      this.destination(source, 2 * fileMultiplier, 0).ifEmpty((s) => (destinations = destinations.add(s)));
+    this.ifDestinationIsEmpty(source, 1, 0, (d) => (destinations = destinations.add(d)));
+    if (this.onInitialFile(source)) {
+      this.ifDestinationIsEmpty(source, 2, 0, (d) => (destinations = destinations.add(d)));
     }
-    this.destination(source, 1 * fileMultiplier, -1).ifPiece(oppositeColour, (s) => (destinations = destinations.add(s)));
-    this.destination(source, 1 * fileMultiplier, 1).ifPiece(oppositeColour, (s) => (destinations = destinations.add(s)));
+    this.ifDestinationIsOccupiedByOpponent(source, 1, -1, (d) => (destinations = destinations.add(d)));
+    this.ifDestinationIsOccupiedByOpponent(source, 1, 1, (d) => (destinations = destinations.add(d)));
 
     return destinations;
   }
@@ -111,43 +114,68 @@ export class Game implements immutable.ValueObject {
     return this.mapBoard((board) => {
       const srcPiece = board.get(source)!;
       return board.delete(source).set(destination, srcPiece);
-    });
+    }).swapNextToMove();
   }
 
   private mapBoard(fn: (board: immutable.Map<Square, Piece>) => immutable.Map<Square, Piece>): Game {
     const newGame = new Game();
+    newGame.nextToMove = this.nextToMove;
     newGame.board = fn(this.board);
     return newGame;
   }
 
-  private destination(square: Square, deltaFile: number, deltaColumn: number): MaybeSquare {
-    const dest = square.addFile(deltaFile)?.addColumn(deltaColumn);
-    let piece: Piece | undefined;
-    if (dest !== undefined) {
-      piece = this.getPiece(dest);
-    }
-    return new MaybeSquare(dest, piece);
-  }
-}
-
-class MaybeSquare {
-  private square: Square | undefined;
-  private piece: Piece | undefined;
-
-  constructor(square: Square | undefined, piece: Piece | undefined) {
-    this.square = square;
-    this.piece = piece;
+  private ifDestinationIsEmpty(
+    source: Square,
+    deltaFile: number,
+    deltaColumn: number,
+    fn: (destination: Square) => void
+  ) {
+    this.withExistingDestination(source, deltaFile, deltaColumn, (d, p) => {
+      if (p === undefined) {
+        fn(d);
+      }
+    });
   }
 
-  ifEmpty(fn: (s: Square) => void) {
-    if (this.square !== undefined && this.piece === undefined) {
-      fn(this.square);
+  private ifDestinationIsOccupiedByOpponent(
+    source: Square,
+    deltaFile: number,
+    deltaColumn: number,
+    fn: (destination: Square) => void
+  ) {
+    this.withExistingDestination(source, deltaFile, deltaColumn, (d, p) => {
+      if (p !== undefined && p.colour !== this.nextToMove) {
+        fn(d);
+      }
+    });
+  }
+
+  private withExistingDestination(
+    source: Square,
+    deltaFile: number,
+    deltaColumn: number,
+    fn: (destination: Square, piece: Piece | undefined) => void
+  ) {
+    const destination = this.destination(source, deltaFile, deltaColumn);
+    if (destination !== undefined) {
+      fn(destination, this.getPiece(destination));
     }
   }
 
-  ifPiece(colour: Piece.Colour, fn: (s: Square) => void) {
-    if (this.square !== undefined && this.piece !== undefined && this.piece.colour === colour) {
-      fn(this.square);
+  private destination(source: Square, deltaFile: number, deltaColumn: number) {
+    const directionMultiplier = this.nextToMove === Piece.Colour.WHITE ? 1 : -1;
+    return source.addFile(deltaFile * directionMultiplier)?.addColumn(deltaColumn * directionMultiplier);
+  }
+
+  private onInitialFile(square: Square) {
+    if (this.nextToMove == Piece.Colour.WHITE) {
+      return square.file === Square.File._2;
+    } else {
+      return square.file === Square.File._7;
     }
+  }
+
+  private swapNextToMove(): Game {
+    return this.withNextToMove(this.nextToMove === Piece.Colour.WHITE ? Piece.Colour.BLACK : Piece.Colour.WHITE);
   }
 }
