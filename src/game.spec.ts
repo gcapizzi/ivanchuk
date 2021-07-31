@@ -8,13 +8,7 @@ import { checkAllowedMoves } from "./spec_utils";
 describe("Game", () => {
   describe("empty", () => {
     it("returns a Game with no pieces", () => {
-      const game = chess.Game.empty();
-
-      for (let column of chess.Square.Columns) {
-        for (let file of chess.Square.Files) {
-          expect(game.getPiece(new chess.Square(column, file))).toBeUndefined();
-        }
-      }
+      expect(chess.Game.empty()).toEqualValue(fen.parse("8/8/8/8/8/8/8/8")!);
     });
   });
 
