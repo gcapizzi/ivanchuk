@@ -72,10 +72,6 @@ export class Game implements immutable.ValueObject {
   }
 
   move(source: Square, destination: Square): Game {
-    if (this.board.get(source) === undefined) {
-      return this;
-    }
-
     if (this.validDestinations(source).includes(destination)) {
       return this.movePiece(source, destination);
     }
