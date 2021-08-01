@@ -101,6 +101,33 @@ describe("Game", () => {
         checkAllowedMoves(game, "e3", []);
         checkAllowedMoves(game, "e6", ["e5"]);
       });
+
+      it("allows en passant captures", () => {
+        let game = chess.Game.startingPosition()
+          .move(Square.fromString("e2")!, Square.fromString("e4")!)
+          .move(Square.fromString("c7")!, Square.fromString("c5")!)
+          .move(Square.fromString("e4")!, Square.fromString("e5")!)
+          .move(Square.fromString("c5")!, Square.fromString("c4")!)
+          .move(Square.fromString("d2")!, Square.fromString("d4")!);
+
+        checkAllowedMoves(game, "c4", ["c3", "d3"]);
+
+        let missedEnPassantGame = game
+          .move(Square.fromString("a7")!, Square.fromString("a6")!)
+          .move(Square.fromString("a2")!, Square.fromString("a3")!);
+
+        checkAllowedMoves(missedEnPassantGame, "c4", ["c3"]);
+
+        game = game.move(Square.fromString("f7")!, Square.fromString("f5")!);
+
+        checkAllowedMoves(game, "e5", ["e6", "f6"]);
+
+        missedEnPassantGame = game
+          .move(Square.fromString("a2")!, Square.fromString("a3")!)
+          .move(Square.fromString("a7")!, Square.fromString("a6")!);
+
+        checkAllowedMoves(missedEnPassantGame, "e5", ["e6"]);
+      });
     });
   });
 });

@@ -4,11 +4,22 @@ import { Square } from "./square";
 import { Piece } from "./piece";
 
 export class Game implements immutable.ValueObject {
-  private board = immutable.Map<Square, Piece>();
-  private nextToMove = Piece.Colour.WHITE;
+  private board: immutable.Map<Square, Piece>;
+  private nextToMove: Piece.Colour;
+  private enPassantSquare: Square | undefined;
+
+  private constructor(
+    board: immutable.Map<Square, Piece>,
+    nextToMove: Piece.Colour,
+    enPassantSquare: Square | undefined
+  ) {
+    this.board = board;
+    this.nextToMove = nextToMove;
+    this.enPassantSquare = enPassantSquare;
+  }
 
   static empty(): Game {
-    return new Game();
+    return new Game(immutable.Map<Square, Piece>(), Piece.Colour.WHITE, undefined);
   }
 
   static startingPosition(): Game {
@@ -73,19 +84,39 @@ export class Game implements immutable.ValueObject {
   }
 
   withNextToMove(nextToMove: Piece.Colour): Game {
-    const newGame = new Game();
-    newGame.board = this.board;
-    newGame.nextToMove = nextToMove;
-    return newGame;
+    return new Game(this.board, nextToMove, this.enPassantSquare);
   }
 
   getNextToMove(): Piece.Colour {
     return this.nextToMove;
   }
 
+  withEnPassantSquare(enPassantSquare: Square): Game {
+    return new Game(this.board, this.nextToMove, enPassantSquare);
+  }
+
+  removeEnPassantSquare(): Game {
+    return new Game(this.board, this.nextToMove, undefined);
+  }
+
   move(source: Square, destination: Square): Game {
+    const piece = this.getPiece(source);
+    if (piece === undefined || piece.colour !== this.nextToMove) {
+      return this;
+    }
+
     if (this.validDestinations(source).includes(destination)) {
-      return this.movePiece(source, destination);
+      let newGame = this.mapBoard((board) => {
+        return board.delete(source).set(destination, piece);
+      });
+
+      if (Math.abs(destination.file - source.file) === 2) {
+        newGame = newGame.withEnPassantSquare(this.destination(destination, -1, 0)!);
+      } else {
+        newGame = newGame.removeEnPassantSquare();
+      }
+
+      return newGame.swapNextToMove();
     }
 
     return this;
@@ -93,11 +124,6 @@ export class Game implements immutable.ValueObject {
 
   // TODO consider withMutations
   validDestinations(source: Square): immutable.Set<Square> {
-    const piece = this.getPiece(source);
-    if (piece === undefined || piece.colour !== this.nextToMove) {
-      return immutable.Set();
-    }
-
     let destinations = immutable.Set<Square>();
 
     this.ifDestinationIsEmpty(source, 1, 0, (d) => (destinations = destinations.add(d)));
@@ -106,22 +132,14 @@ export class Game implements immutable.ValueObject {
     }
     this.ifDestinationIsOccupiedByOpponent(source, 1, -1, (d) => (destinations = destinations.add(d)));
     this.ifDestinationIsOccupiedByOpponent(source, 1, 1, (d) => (destinations = destinations.add(d)));
+    this.ifDestinationIsEnPassant(source, 1, -1, (d) => (destinations = destinations.add(d)));
+    this.ifDestinationIsEnPassant(source, 1, 1, (d) => (destinations = destinations.add(d)));
 
     return destinations;
   }
 
-  private movePiece(source: Square, destination: Square): Game {
-    return this.mapBoard((board) => {
-      const srcPiece = board.get(source)!;
-      return board.delete(source).set(destination, srcPiece);
-    }).swapNextToMove();
-  }
-
   private mapBoard(fn: (board: immutable.Map<Square, Piece>) => immutable.Map<Square, Piece>): Game {
-    const newGame = new Game();
-    newGame.nextToMove = this.nextToMove;
-    newGame.board = fn(this.board);
-    return newGame;
+    return new Game(fn(this.board), this.nextToMove, this.enPassantSquare);
   }
 
   private ifDestinationIsEmpty(
@@ -145,6 +163,19 @@ export class Game implements immutable.ValueObject {
   ) {
     this.withExistingDestination(source, deltaFile, deltaColumn, (d, p) => {
       if (p !== undefined && p.colour !== this.nextToMove) {
+        fn(d);
+      }
+    });
+  }
+
+  private ifDestinationIsEnPassant(
+    source: Square,
+    deltaFile: number,
+    deltaColumn: number,
+    fn: (destination: Square) => void
+  ) {
+    this.withExistingDestination(source, deltaFile, deltaColumn, (d, _) => {
+      if (this.enPassantSquare?.equals(d)) {
         fn(d);
       }
     });
