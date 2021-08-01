@@ -67,8 +67,8 @@ describe("Game", () => {
   describe("nextToMove", () => {
     it("sets/gets the next colour to move", () => {
       expect(chess.Game.empty().withNextToMove(Piece.Colour.BLACK).getNextToMove()).toEqual(Piece.Colour.BLACK);
-    })
-  })
+    });
+  });
 
   describe("move", () => {
     describe("pawns", () => {
@@ -97,10 +97,10 @@ describe("Game", () => {
         checkAllowedMoves(game, "e3", ["e4"]);
         checkAllowedMoves(game, "e6", []);
 
-        game = game.move(Square.fromString("e3")!, Square.fromString("e4")!)
+        game = game.move(Square.fromString("e3")!, Square.fromString("e4")!);
         checkAllowedMoves(game, "e3", []);
         checkAllowedMoves(game, "e6", ["e5"]);
-      })
+      });
     });
   });
 });

@@ -1,17 +1,15 @@
 import * as immutable from "immutable";
 import * as chess from "./chess";
-import { Game } from "./game";
-import { Piece } from "./piece";
-import { Square } from "./square";
+import * as fen from "./fen";
 
-export function checkAllowedMoves(game: Game, from: string, to: Array<string>) {
-  const source = Square.fromString(from)!;
+export function checkAllowedMoves(game: chess.Game, from: string, to: Array<string>) {
+  const source = chess.Square.fromString(from)!;
   const piece = game.getPiece(source)!;
-  const allowedDestinations = immutable.Set(to.map(Square.fromString));
+  const allowedDestinations = immutable.Set(to.map(chess.Square.fromString));
 
-  for (let column of Square.Columns) {
-    for (let file of Square.Files) {
-      const destination = new Square(column, file);
+  for (let column of chess.Square.Columns) {
+    for (let file of chess.Square.Files) {
+      const destination = new chess.Square(column, file);
 
       if (destination.equals(source)) {
         continue;
@@ -43,9 +41,9 @@ expect.extend({
     let pass = got.equals(expected);
     let message = () => {
       if (pass) {
-        return `${got} should not be equal to ${expected}`
+        return `${got} should not be equal to ${expected}`;
       } else {
-        return `${got} should be equal to ${expected}`
+        return `${got} should be equal to ${expected}`;
       }
     };
     return { pass, message };
