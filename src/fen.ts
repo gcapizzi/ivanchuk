@@ -25,3 +25,35 @@ export function parse(fen: string): chess.Game | undefined {
   }
   return game;
 }
+
+export function render(game: chess.Game): string {
+  let fileStrs = [];
+
+  for (let file of chess.Square.Files.slice().reverse()) {
+    let fileStr = "";
+    let counter = 0;
+    for (let column of chess.Square.Columns) {
+      const piece = game.getPiece(new chess.Square(column, file));
+      if (piece == undefined) {
+        counter += 1;
+      } else {
+        if (counter > 0) {
+          fileStr += counter;
+          counter = 0;
+        }
+        fileStr += piece.toString();
+      }
+    }
+    if (counter > 0) {
+      fileStr += counter;
+    }
+    fileStrs.push(fileStr);
+  }
+
+  let nextToMove = "w";
+  if (game.getNextToMove() === chess.Piece.Colour.BLACK) {
+    nextToMove = "b";
+  }
+
+  return fileStrs.join("/") + " " + nextToMove;
+}

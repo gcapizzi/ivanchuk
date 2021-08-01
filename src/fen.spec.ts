@@ -20,3 +20,16 @@ describe("parse", () => {
     );
   });
 });
+
+describe("render", () => {
+  it("renders a game into a FEN string", () => {
+    expect(fen.render(fen.parse("8/8/8/8/8/8/8/8 w")!)).toEqual("8/8/8/8/8/8/8/8 w");
+    expect(fen.render(fen.parse("8/8/8/8/8/8/8/8 b")!)).toEqual("8/8/8/8/8/8/8/8 b");
+    expect(fen.render(fen.parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w")!)).toEqual(
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w"
+    );
+    expect(fen.render(fen.parse("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b")!)).toEqual(
+      "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b"
+    );
+  });
+});

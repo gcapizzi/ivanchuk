@@ -80,7 +80,7 @@ export namespace Square {
     _8,
   }
 
-  export const Files = [File._1, File._2, File._3, File._4, File._4, File._5, File._6, File._7, File._8];
+  export const Files = [File._1, File._2, File._3, File._4, File._5, File._6, File._7, File._8];
 }
 
 function parseColumn(str: string): Square.Column | undefined {
