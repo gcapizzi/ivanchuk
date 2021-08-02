@@ -71,6 +71,18 @@ describe("Game", () => {
   });
 
   describe("move", () => {
+    it("switches the next to move colour", () => {
+      let game = chess.Game.startingPosition();
+      expect(game.getNextToMove()).toEqual(chess.Piece.Colour.WHITE);
+      checkAllowedMoves(game, "e2", ["e3", "e4"]);
+      checkAllowedMoves(game, "e7", []);
+
+      game = game.move(chess.Square.fromString("e2")!, chess.Square.fromString("e4")!);
+      expect(game.getNextToMove()).toEqual(chess.Piece.Colour.BLACK);
+      checkAllowedMoves(game, "e4", []);
+      checkAllowedMoves(game, "e7", ["e6", "e5"]);
+    });
+
     describe("pawns", () => {
       it("moves the pawn", () => {
         let game = fen.parse("8/8/4p3/8/8/4P3/5P2/8 w")!;
@@ -90,16 +102,6 @@ describe("Game", () => {
         game = fen.parse("8/PPP5/PpP5/PPP5/ppp5/pPp5/ppp5/8 b")!;
         checkAllowedMoves(game, "b3", []);
         checkAllowedMoves(game, "b6", ["a5", "c5"]);
-      });
-
-      it("switches the next to move colour", () => {
-        let game = fen.parse("8/8/4p3/8/8/4P3/8/8 w")!;
-        checkAllowedMoves(game, "e3", ["e4"]);
-        checkAllowedMoves(game, "e6", []);
-
-        game = game.move(chess.Square.fromString("e3")!, chess.Square.fromString("e4")!);
-        checkAllowedMoves(game, "e3", []);
-        checkAllowedMoves(game, "e6", ["e5"]);
       });
 
       it("allows en passant captures", () => {
@@ -127,6 +129,23 @@ describe("Game", () => {
           .move(chess.Square.fromString("a7")!, chess.Square.fromString("a6")!);
 
         checkAllowedMoves(missedEnPassantGame, "e5", ["e6"]);
+      });
+    });
+
+    describe("knights", () => {
+      it("moves the knight", () => {
+        const game = chess.Game.empty().addPiece(chess.Piece.fromString("N")!, chess.Square.fromString("d4")!);
+        checkAllowedMoves(game, "d4", ["e6", "f5", "f3", "e2", "c2", "b3", "b5", "c6"]);
+      });
+
+      it("doesn't allow non-existing or occupied-by-us squares", () => {
+        const whiteGame = chess.Game.startingPosition();
+        checkAllowedMoves(whiteGame, "b1", ["a3", "c3"]);
+        checkAllowedMoves(whiteGame, "g1", ["f3", "h3"]);
+
+        const blackGame = chess.Game.startingPosition().withNextToMove(chess.Piece.Colour.BLACK);
+        checkAllowedMoves(blackGame, "b8", ["a6", "c6"]);
+        checkAllowedMoves(blackGame, "g8", ["f6", "h6"]);
       });
     });
   });

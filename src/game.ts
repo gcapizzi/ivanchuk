@@ -105,7 +105,7 @@ export class Game implements immutable.ValueObject {
       return this;
     }
 
-    if (this.validDestinations(source).includes(destination)) {
+    if (this.validDestinations(piece, source).includes(destination)) {
       let newGame = this.mapBoard((board) => {
         return board.delete(source).set(destination, piece);
       });
@@ -123,7 +123,18 @@ export class Game implements immutable.ValueObject {
   }
 
   // TODO consider withMutations
-  validDestinations(source: Square): immutable.Set<Square> {
+  private validDestinations(piece: Piece, source: Square): immutable.Set<Square> {
+    switch (piece.type) {
+      case Piece.Type.PAWN:
+        return this.validPawnDestinations(source);
+      case Piece.Type.KNIGHT:
+        return this.validKnightDestinations(source);
+    }
+
+    return immutable.Set();
+  }
+
+  private validPawnDestinations(source: Square): immutable.Set<Square> {
     let destinations = immutable.Set<Square>();
 
     this.ifDestinationIsEmpty(source, 1, 0, (d) => (destinations = destinations.add(d)));
@@ -134,6 +145,21 @@ export class Game implements immutable.ValueObject {
     this.ifDestinationIsOccupiedByOpponent(source, 1, 1, (d) => (destinations = destinations.add(d)));
     this.ifDestinationIsEnPassant(source, 1, -1, (d) => (destinations = destinations.add(d)));
     this.ifDestinationIsEnPassant(source, 1, 1, (d) => (destinations = destinations.add(d)));
+
+    return destinations;
+  }
+
+  private validKnightDestinations(source: Square): immutable.Set<Square> {
+    let destinations = immutable.Set<Square>();
+
+    this.ifDestinationIsNotOccupiedByMe(source, 2, 1, (d) => (destinations = destinations.add(d)));
+    this.ifDestinationIsNotOccupiedByMe(source, 2, -1, (d) => (destinations = destinations.add(d)));
+    this.ifDestinationIsNotOccupiedByMe(source, -2, 1, (d) => (destinations = destinations.add(d)));
+    this.ifDestinationIsNotOccupiedByMe(source, -2, -1, (d) => (destinations = destinations.add(d)));
+    this.ifDestinationIsNotOccupiedByMe(source, 1, 2, (d) => (destinations = destinations.add(d)));
+    this.ifDestinationIsNotOccupiedByMe(source, 1, -2, (d) => (destinations = destinations.add(d)));
+    this.ifDestinationIsNotOccupiedByMe(source, -1, 2, (d) => (destinations = destinations.add(d)));
+    this.ifDestinationIsNotOccupiedByMe(source, -1, -2, (d) => (destinations = destinations.add(d)));
 
     return destinations;
   }
@@ -163,6 +189,19 @@ export class Game implements immutable.ValueObject {
   ) {
     this.ifDestinationExists(source, deltaFile, deltaColumn, (d, p) => {
       if (p !== undefined && p.colour !== this.nextToMove) {
+        fn(d);
+      }
+    });
+  }
+
+  private ifDestinationIsNotOccupiedByMe(
+    source: Square,
+    deltaFile: number,
+    deltaColumn: number,
+    fn: (destination: Square) => void
+  ) {
+    this.ifDestinationExists(source, deltaFile, deltaColumn, (d, p) => {
+      if (p === undefined || p.colour !== this.nextToMove) {
         fn(d);
       }
     });
