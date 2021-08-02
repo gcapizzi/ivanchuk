@@ -148,7 +148,7 @@ export class Game implements immutable.ValueObject {
     deltaColumn: number,
     fn: (destination: Square) => void
   ) {
-    this.withExistingDestination(source, deltaFile, deltaColumn, (d, p) => {
+    this.ifDestinationExists(source, deltaFile, deltaColumn, (d, p) => {
       if (p === undefined) {
         fn(d);
       }
@@ -161,7 +161,7 @@ export class Game implements immutable.ValueObject {
     deltaColumn: number,
     fn: (destination: Square) => void
   ) {
-    this.withExistingDestination(source, deltaFile, deltaColumn, (d, p) => {
+    this.ifDestinationExists(source, deltaFile, deltaColumn, (d, p) => {
       if (p !== undefined && p.colour !== this.nextToMove) {
         fn(d);
       }
@@ -174,14 +174,14 @@ export class Game implements immutable.ValueObject {
     deltaColumn: number,
     fn: (destination: Square) => void
   ) {
-    this.withExistingDestination(source, deltaFile, deltaColumn, (d, _) => {
+    this.ifDestinationExists(source, deltaFile, deltaColumn, (d, _) => {
       if (this.enPassantSquare?.equals(d)) {
         fn(d);
       }
     });
   }
 
-  private withExistingDestination(
+  private ifDestinationExists(
     source: Square,
     deltaFile: number,
     deltaColumn: number,
