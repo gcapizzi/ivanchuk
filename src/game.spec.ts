@@ -1,7 +1,5 @@
 import * as chess from "./chess";
 import * as fen from "./fen";
-import { Piece } from "./piece";
-import { Square } from "./square";
 
 import { checkAllowedMoves } from "./spec_utils";
 
@@ -21,18 +19,18 @@ describe("Game", () => {
   describe("equals and hashCode", () => {
     it("implements immutable.ValueObject correctly", () => {
       const game1 = chess.Game.empty()
-        .addPiece(Piece.fromString("P")!, Square.fromString("E4")!)
-        .addPiece(Piece.fromString("p")!, Square.fromString("E5")!);
+        .addPiece(chess.Piece.fromString("P")!, chess.Square.fromString("E4")!)
+        .addPiece(chess.Piece.fromString("p")!, chess.Square.fromString("E5")!);
       const game2 = chess.Game.empty()
-        .addPiece(Piece.fromString("p")!, Square.fromString("E5")!)
-        .addPiece(Piece.fromString("P")!, Square.fromString("E4")!);
+        .addPiece(chess.Piece.fromString("p")!, chess.Square.fromString("E5")!)
+        .addPiece(chess.Piece.fromString("P")!, chess.Square.fromString("E4")!);
       const game3 = chess.Game.empty()
-        .addPiece(Piece.fromString("p")!, Square.fromString("E5")!)
-        .addPiece(Piece.fromString("P")!, Square.fromString("E3")!);
+        .addPiece(chess.Piece.fromString("p")!, chess.Square.fromString("E5")!)
+        .addPiece(chess.Piece.fromString("P")!, chess.Square.fromString("E3")!);
       const game4 = chess.Game.empty()
-        .withNextToMove(Piece.Colour.BLACK)
-        .addPiece(Piece.fromString("P")!, Square.fromString("E4")!)
-        .addPiece(Piece.fromString("p")!, Square.fromString("E5")!);
+        .withNextToMove(chess.Piece.Colour.BLACK)
+        .addPiece(chess.Piece.fromString("P")!, chess.Square.fromString("E4")!)
+        .addPiece(chess.Piece.fromString("p")!, chess.Square.fromString("E5")!);
 
       expect(game1.equals(game2)).toBe(true);
       expect(game1.hashCode()).toEqual(game2.hashCode());
@@ -58,15 +56,17 @@ describe("Game", () => {
   describe("removePiece", () => {
     it("returns a new Game with the piece on the provided square removed", () => {
       const game = chess.Game.startingPosition();
-      const e2 = Square.fromString("e2")!;
+      const e2 = chess.Square.fromString("e2")!;
       expect(game.removePiece(e2).getPiece(e2)).toBeUndefined();
-      expect(game.removePiece(Square.fromString("e4")!)).toEqualValue(game);
+      expect(game.removePiece(chess.Square.fromString("e4")!)).toEqualValue(game);
     });
   });
 
   describe("nextToMove", () => {
     it("sets/gets the next colour to move", () => {
-      expect(chess.Game.empty().withNextToMove(Piece.Colour.BLACK).getNextToMove()).toEqual(Piece.Colour.BLACK);
+      expect(chess.Game.empty().withNextToMove(chess.Piece.Colour.BLACK).getNextToMove()).toEqual(
+        chess.Piece.Colour.BLACK
+      );
     });
   });
 
@@ -97,34 +97,34 @@ describe("Game", () => {
         checkAllowedMoves(game, "e3", ["e4"]);
         checkAllowedMoves(game, "e6", []);
 
-        game = game.move(Square.fromString("e3")!, Square.fromString("e4")!);
+        game = game.move(chess.Square.fromString("e3")!, chess.Square.fromString("e4")!);
         checkAllowedMoves(game, "e3", []);
         checkAllowedMoves(game, "e6", ["e5"]);
       });
 
       it("allows en passant captures", () => {
         let game = chess.Game.startingPosition()
-          .move(Square.fromString("e2")!, Square.fromString("e4")!)
-          .move(Square.fromString("c7")!, Square.fromString("c5")!)
-          .move(Square.fromString("e4")!, Square.fromString("e5")!)
-          .move(Square.fromString("c5")!, Square.fromString("c4")!)
-          .move(Square.fromString("d2")!, Square.fromString("d4")!);
+          .move(chess.Square.fromString("e2")!, chess.Square.fromString("e4")!)
+          .move(chess.Square.fromString("c7")!, chess.Square.fromString("c5")!)
+          .move(chess.Square.fromString("e4")!, chess.Square.fromString("e5")!)
+          .move(chess.Square.fromString("c5")!, chess.Square.fromString("c4")!)
+          .move(chess.Square.fromString("d2")!, chess.Square.fromString("d4")!);
 
         checkAllowedMoves(game, "c4", ["c3", "d3"]);
 
         let missedEnPassantGame = game
-          .move(Square.fromString("a7")!, Square.fromString("a6")!)
-          .move(Square.fromString("a2")!, Square.fromString("a3")!);
+          .move(chess.Square.fromString("a7")!, chess.Square.fromString("a6")!)
+          .move(chess.Square.fromString("a2")!, chess.Square.fromString("a3")!);
 
         checkAllowedMoves(missedEnPassantGame, "c4", ["c3"]);
 
-        game = game.move(Square.fromString("f7")!, Square.fromString("f5")!);
+        game = game.move(chess.Square.fromString("f7")!, chess.Square.fromString("f5")!);
 
         checkAllowedMoves(game, "e5", ["e6", "f6"]);
 
         missedEnPassantGame = game
-          .move(Square.fromString("a2")!, Square.fromString("a3")!)
-          .move(Square.fromString("a7")!, Square.fromString("a6")!);
+          .move(chess.Square.fromString("a2")!, chess.Square.fromString("a3")!)
+          .move(chess.Square.fromString("a7")!, chess.Square.fromString("a6")!);
 
         checkAllowedMoves(missedEnPassantGame, "e5", ["e6"]);
       });
