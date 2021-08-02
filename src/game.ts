@@ -3,23 +3,21 @@ import * as immutable from "immutable";
 import { Square } from "./square";
 import { Piece } from "./piece";
 
-export class Game implements immutable.ValueObject {
-  private board: immutable.Map<Square, Piece>;
-  private nextToMove: Piece.Colour;
-  private enPassantSquare: Square | undefined;
+class State extends immutable.Record({
+  board: immutable.Map<Square, Piece>(),
+  nextToMove: Piece.Colour.WHITE,
+  enPassantSquare: undefined as Square | undefined,
+}) {}
 
-  private constructor(
-    board: immutable.Map<Square, Piece>,
-    nextToMove: Piece.Colour,
-    enPassantSquare: Square | undefined
-  ) {
-    this.board = board;
-    this.nextToMove = nextToMove;
-    this.enPassantSquare = enPassantSquare;
+export class Game implements immutable.ValueObject {
+  private state: State;
+
+  private constructor(state: State) {
+    this.state = state;
   }
 
   static empty(): Game {
-    return new Game(immutable.Map<Square, Piece>(), Piece.Colour.WHITE, undefined);
+    return new Game(new State());
   }
 
   static startingPosition(): Game {
@@ -59,16 +57,16 @@ export class Game implements immutable.ValueObject {
   }
 
   equals(other: Game): boolean {
-    return this.board.equals(other.board) && this.nextToMove === other.nextToMove;
+    return this.state.equals(other.state)
   }
 
   hashCode(): number {
-    return this.board.hashCode();
+    return this.state.hashCode();
   }
 
   // TODO test
   toString(): string {
-    return this.board.toString();
+    return this.state.toString();
   }
 
   addPiece(piece: Piece, square: Square): Game {
@@ -76,7 +74,7 @@ export class Game implements immutable.ValueObject {
   }
 
   getPiece(square: Square): Piece | undefined {
-    return this.board.get(square);
+    return this.state.board.get(square);
   }
 
   removePiece(square: Square): Game {
@@ -84,24 +82,24 @@ export class Game implements immutable.ValueObject {
   }
 
   withNextToMove(nextToMove: Piece.Colour): Game {
-    return new Game(this.board, nextToMove, this.enPassantSquare);
+    return new Game(this.state.set("nextToMove", nextToMove));
   }
 
   getNextToMove(): Piece.Colour {
-    return this.nextToMove;
+    return this.state.nextToMove;
   }
 
   withEnPassantSquare(enPassantSquare: Square): Game {
-    return new Game(this.board, this.nextToMove, enPassantSquare);
+    return new Game(this.state.set("enPassantSquare", enPassantSquare));
   }
 
   removeEnPassantSquare(): Game {
-    return new Game(this.board, this.nextToMove, undefined);
+    return new Game(this.state.remove("enPassantSquare"));
   }
 
   move(source: Square, destination: Square): Game {
     const piece = this.getPiece(source);
-    if (piece === undefined || piece.colour !== this.nextToMove) {
+    if (piece === undefined || piece.colour !== this.state.nextToMove) {
       return this;
     }
 
@@ -165,7 +163,7 @@ export class Game implements immutable.ValueObject {
   }
 
   private mapBoard(fn: (board: immutable.Map<Square, Piece>) => immutable.Map<Square, Piece>): Game {
-    return new Game(fn(this.board), this.nextToMove, this.enPassantSquare);
+    return new Game(this.state.update("board", fn));
   }
 
   private ifDestinationIsEmpty(
@@ -188,7 +186,7 @@ export class Game implements immutable.ValueObject {
     fn: (destination: Square) => void
   ) {
     this.ifDestinationExists(source, deltaFile, deltaColumn, (d, p) => {
-      if (p !== undefined && p.colour !== this.nextToMove) {
+      if (p !== undefined && p.colour !== this.state.nextToMove) {
         fn(d);
       }
     });
@@ -201,7 +199,7 @@ export class Game implements immutable.ValueObject {
     fn: (destination: Square) => void
   ) {
     this.ifDestinationExists(source, deltaFile, deltaColumn, (d, p) => {
-      if (p === undefined || p.colour !== this.nextToMove) {
+      if (p === undefined || p.colour !== this.state.nextToMove) {
         fn(d);
       }
     });
@@ -214,7 +212,7 @@ export class Game implements immutable.ValueObject {
     fn: (destination: Square) => void
   ) {
     this.ifDestinationExists(source, deltaFile, deltaColumn, (d, _) => {
-      if (this.enPassantSquare?.equals(d)) {
+      if (this.state.enPassantSquare?.equals(d)) {
         fn(d);
       }
     });
@@ -233,12 +231,12 @@ export class Game implements immutable.ValueObject {
   }
 
   private destination(source: Square, deltaFile: number, deltaColumn: number) {
-    const directionMultiplier = this.nextToMove === Piece.Colour.WHITE ? 1 : -1;
+    const directionMultiplier = this.state.nextToMove === Piece.Colour.WHITE ? 1 : -1;
     return source.addFile(deltaFile * directionMultiplier)?.addColumn(deltaColumn * directionMultiplier);
   }
 
   private onInitialFile(square: Square) {
-    if (this.nextToMove == Piece.Colour.WHITE) {
+    if (this.state.nextToMove == Piece.Colour.WHITE) {
       return square.file === Square.File._2;
     } else {
       return square.file === Square.File._7;
@@ -246,6 +244,6 @@ export class Game implements immutable.ValueObject {
   }
 
   private swapNextToMove(): Game {
-    return this.withNextToMove(this.nextToMove === Piece.Colour.WHITE ? Piece.Colour.BLACK : Piece.Colour.WHITE);
+    return this.withNextToMove(this.state.nextToMove === Piece.Colour.WHITE ? Piece.Colour.BLACK : Piece.Colour.WHITE);
   }
 }
