@@ -133,106 +133,66 @@ export class Game implements immutable.ValueObject {
   }
 
   private validPawnDestinations(source: Square): immutable.Set<Square> {
-    let destinations = immutable.Set<Square>();
-
-    this.ifDestinationIsEmpty(source, 1, 0, (d) => (destinations = destinations.add(d)));
+    let frontMoves: Array<[number, number]> = [[1, 0]];
     if (this.onInitialFile(source)) {
-      this.ifDestinationIsEmpty(source, 2, 0, (d) => (destinations = destinations.add(d)));
+      frontMoves.push([2, 0]);
     }
-    this.ifDestinationIsOccupiedByOpponent(source, 1, -1, (d) => (destinations = destinations.add(d)));
-    this.ifDestinationIsOccupiedByOpponent(source, 1, 1, (d) => (destinations = destinations.add(d)));
-    this.ifDestinationIsEnPassant(source, 1, -1, (d) => (destinations = destinations.add(d)));
-    this.ifDestinationIsEnPassant(source, 1, 1, (d) => (destinations = destinations.add(d)));
 
-    return destinations;
+    return this.destinations(source, frontMoves)
+      .filter((s) => this.empty(s!))
+      .union(
+        this.destinations(source, [
+          [1, -1],
+          [1, 1],
+        ]).filter((s) => this.occupiedByThem(s!) || this.enPassant(s!))
+      );
   }
 
   private validKnightDestinations(source: Square): immutable.Set<Square> {
-    let destinations = immutable.Set<Square>();
-
-    this.ifDestinationIsNotOccupiedByMe(source, 2, 1, (d) => (destinations = destinations.add(d)));
-    this.ifDestinationIsNotOccupiedByMe(source, 2, -1, (d) => (destinations = destinations.add(d)));
-    this.ifDestinationIsNotOccupiedByMe(source, -2, 1, (d) => (destinations = destinations.add(d)));
-    this.ifDestinationIsNotOccupiedByMe(source, -2, -1, (d) => (destinations = destinations.add(d)));
-    this.ifDestinationIsNotOccupiedByMe(source, 1, 2, (d) => (destinations = destinations.add(d)));
-    this.ifDestinationIsNotOccupiedByMe(source, 1, -2, (d) => (destinations = destinations.add(d)));
-    this.ifDestinationIsNotOccupiedByMe(source, -1, 2, (d) => (destinations = destinations.add(d)));
-    this.ifDestinationIsNotOccupiedByMe(source, -1, -2, (d) => (destinations = destinations.add(d)));
-
-    return destinations;
+    return this.destinations(source, [
+      [2, 1],
+      [2, -1],
+      [-2, 1],
+      [-2, -1],
+      [1, 2],
+      [1, -2],
+      [-1, 2],
+      [-1, -2],
+    ]).filter((s) => this.notOccupiedByUs(s!));
   }
 
   private mapBoard(fn: (board: immutable.Map<Square, Piece>) => immutable.Map<Square, Piece>): Game {
     return new Game(this.state.update("board", fn));
   }
 
-  private ifDestinationIsEmpty(
-    source: Square,
-    deltaFile: number,
-    deltaColumn: number,
-    fn: (destination: Square) => void
-  ) {
-    this.ifDestinationExists(source, deltaFile, deltaColumn, (d, p) => {
-      if (p === undefined) {
-        fn(d);
-      }
-    });
+  private occupiedByThem(square: Square): boolean {
+    const piece = this.getPiece(square);
+    return piece !== undefined && piece.colour !== this.state.nextToMove;
   }
 
-  private ifDestinationIsOccupiedByOpponent(
-    source: Square,
-    deltaFile: number,
-    deltaColumn: number,
-    fn: (destination: Square) => void
-  ) {
-    this.ifDestinationExists(source, deltaFile, deltaColumn, (d, p) => {
-      if (p !== undefined && p.colour !== this.state.nextToMove) {
-        fn(d);
-      }
-    });
+  private notOccupiedByUs(square: Square): boolean {
+    const piece = this.getPiece(square);
+    return piece === undefined || piece.colour !== this.state.nextToMove;
   }
 
-  private ifDestinationIsNotOccupiedByMe(
-    source: Square,
-    deltaFile: number,
-    deltaColumn: number,
-    fn: (destination: Square) => void
-  ) {
-    this.ifDestinationExists(source, deltaFile, deltaColumn, (d, p) => {
-      if (p === undefined || p.colour !== this.state.nextToMove) {
-        fn(d);
-      }
-    });
+  private empty(square: Square): boolean {
+    return this.getPiece(square) === undefined;
   }
 
-  private ifDestinationIsEnPassant(
-    source: Square,
-    deltaFile: number,
-    deltaColumn: number,
-    fn: (destination: Square) => void
-  ) {
-    this.ifDestinationExists(source, deltaFile, deltaColumn, (d, _) => {
-      if (this.state.enPassantSquare?.equals(d)) {
-        fn(d);
-      }
-    });
+  private enPassant(square: Square): boolean {
+    return this.state.enPassantSquare?.equals(square) ?? false;
   }
 
-  private ifDestinationExists(
-    source: Square,
-    deltaFile: number,
-    deltaColumn: number,
-    fn: (destination: Square, piece: Piece | undefined) => void
-  ) {
-    const destination = this.destination(source, deltaFile, deltaColumn);
-    if (destination !== undefined) {
-      fn(destination, this.getPiece(destination));
-    }
-  }
-
-  private destination(source: Square, deltaFile: number, deltaColumn: number) {
+  private destination(source: Square, deltaFile: number, deltaColumn: number): Square | undefined {
     const directionMultiplier = this.state.nextToMove === Piece.Colour.WHITE ? 1 : -1;
     return source.addFile(deltaFile * directionMultiplier)?.addColumn(deltaColumn * directionMultiplier);
+  }
+
+  private destinations(source: Square, deltas: Array<[number, number]>): immutable.Set<Square> {
+    return immutable
+      .Set(deltas)
+      .map(([df, fc]) => this.destination(source, df, fc))
+      .filter((s) => s !== undefined) as immutable.Set<Square>;
   }
 
   private onInitialFile(square: Square) {
