@@ -148,5 +148,21 @@ describe("Game", () => {
         checkAllowedMoves(blackGame, "g8", ["f6", "h6"]);
       });
     });
+
+    describe("bishops", () => {
+      it("moves the bishop", () => {
+        const game = chess.Game.empty().addPiece(chess.Piece.fromString("B")!, chess.Square.fromString("d4")!);
+        checkAllowedMoves(game, "d4", ["c3", "b2", "a1", "c5", "b6", "a7", "e5", "f6", "g7", "h8", "e3", "f2", "g1"]);
+      });
+
+      it("doesn't allow blocked squares", () => {
+        const game = chess.Game.empty()
+          .addPiece(chess.Piece.fromString("B")!, chess.Square.fromString("d4")!)
+          .addPiece(chess.Piece.fromString("n")!, chess.Square.fromString("g7")!)
+          .addPiece(chess.Piece.fromString("P")!, chess.Square.fromString("b6")!);
+
+        checkAllowedMoves(game, "d4", ["c3", "b2", "a1", "c5", "e5", "f6", "g7", "e3", "f2", "g1"]);
+      });
+    });
   });
 });

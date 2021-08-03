@@ -127,6 +127,8 @@ export class Game implements immutable.ValueObject {
         return this.validPawnDestinations(source);
       case Piece.Type.KNIGHT:
         return this.validKnightDestinations(source);
+      case Piece.Type.BISHOP:
+        return this.validBishopDestinations(source);
     }
 
     return immutable.Set();
@@ -158,7 +160,31 @@ export class Game implements immutable.ValueObject {
       [1, -2],
       [-1, 2],
       [-1, -2],
-    ]).filter((s) => this.notOccupiedByUs(s!));
+    ]).filter((s) => this.empty(s) || this.occupiedByThem(s));
+  }
+
+  private validBishopDestinations(source: Square): immutable.Set<Square> {
+    return this.validDiagonalDestinations(source, -1, -1)
+      .union(this.validDiagonalDestinations(source, 1, 1))
+      .union(this.validDiagonalDestinations(source, -1, 1))
+      .union(this.validDiagonalDestinations(source, 1, -1));
+  }
+
+  private validDiagonalDestinations(source: Square, xSign: number, ySign: number): immutable.Set<Square> {
+    const diagonal = immutable
+      .Range(xSign, Infinity * xSign, xSign)
+      .zip(immutable.Range(ySign, Infinity * ySign, ySign))
+      .map(([dc, df]) => source.addColumn(dc)?.addFile(df))
+      .takeWhile((s) => s !== undefined)
+      .toList() as immutable.List<Square>;
+
+    let dests = diagonal.takeWhile((s) => this.empty(s)).toSet();
+    const block = diagonal.find((s) => !this.empty(s));
+    if (block && this.occupiedByThem(block)) { // capture
+      return dests.add(block);
+    }
+
+    return dests;
   }
 
   private mapBoard(fn: (board: immutable.Map<Square, Piece>) => immutable.Map<Square, Piece>): Game {
@@ -168,11 +194,6 @@ export class Game implements immutable.ValueObject {
   private occupiedByThem(square: Square): boolean {
     const piece = this.getPiece(square);
     return piece !== undefined && piece.colour !== this.state.nextToMove;
-  }
-
-  private notOccupiedByUs(square: Square): boolean {
-    const piece = this.getPiece(square);
-    return piece === undefined || piece.colour !== this.state.nextToMove;
   }
 
   private empty(square: Square): boolean {
