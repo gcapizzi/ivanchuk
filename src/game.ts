@@ -57,7 +57,7 @@ export class Game implements immutable.ValueObject {
   }
 
   equals(other: Game): boolean {
-    return this.state.equals(other.state)
+    return this.state.equals(other.state);
   }
 
   hashCode(): number {
