@@ -98,14 +98,9 @@ export class Game implements immutable.ValueObject {
   }
 
   move(source: Square, destination: Square): Game {
-    const piece = this.getPiece(source);
-    if (piece === undefined || piece.colour !== this.state.nextToMove) {
-      return this;
-    }
-
-    if (this.validDestinations(piece, source).includes(destination)) {
+    if (this.validDestinationSet(source).includes(destination)) {
       let newGame = this.mapBoard((board) => {
-        return board.delete(source).set(destination, piece);
+        return board.set(destination, board.get(source)!).delete(source);
       });
 
       if (Math.abs(destination.file - source.file) === 2) {
@@ -120,8 +115,21 @@ export class Game implements immutable.ValueObject {
     return this;
   }
 
+  allValidDestinations(): Map<Square, Square[]> {
+    return new Map(this.state.board.mapEntries(([s, p]) => [s, this.validDestinations(s)]).entries());
+  }
+
+  validDestinations(square: Square): Square[] {
+    return this.validDestinationSet(square).toArray();
+  }
+
   // TODO consider withMutations
-  private validDestinations(piece: Piece, source: Square): immutable.Set<Square> {
+  private validDestinationSet(source: Square): immutable.Set<Square> {
+    const piece = this.getPiece(source);
+    if (piece === undefined || piece.colour !== this.state.nextToMove) {
+      return immutable.Set();
+    }
+
     switch (piece.type) {
       case Piece.Type.PAWN:
         return this.validPawnDestinations(source);
