@@ -214,5 +214,21 @@ describe("Game", () => {
         ]);
       });
     });
+
+    describe("kings", () => {
+      it("moves the king", () => {
+        const game = chess.Game.empty().addPiece(chess.Piece.fromString("K")!, chess.Square.fromString("d4")!);
+        checkAllowedMoves(game, "d4", ["d5", "e5", "e4", "e3", "d3", "c3", "c4", "c5"]);
+      });
+
+      it("doesn't allow non-existing or occupied-by-us squares", () => {
+        const game = chess.Game.empty()
+          .addPiece(chess.Piece.fromString("K")!, chess.Square.fromString("e1")!)
+          .addPiece(chess.Piece.fromString("p")!, chess.Square.fromString("e2")!)
+          .addPiece(chess.Piece.fromString("P")!, chess.Square.fromString("d1")!);
+
+        checkAllowedMoves(game, "e1", ["e2", "d2", "f2", "f1"]);
+      });
+    });
   });
 });

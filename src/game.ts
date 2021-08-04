@@ -133,9 +133,9 @@ export class Game implements immutable.ValueObject {
         return this.validRookDestinations(source);
       case Piece.Type.QUEEN:
         return this.validQueenDestinations(source);
+      case Piece.Type.KING:
+        return this.validKingDestinations(source);
     }
-
-    return immutable.Set();
   }
 
   private validPawnDestinations(source: Square): immutable.Set<Square> {
@@ -190,6 +190,19 @@ export class Game implements immutable.ValueObject {
       .union(this.validDiagonalDestinations(source, 1, 1))
       .union(this.validDiagonalDestinations(source, -1, 1))
       .union(this.validDiagonalDestinations(source, 1, -1));
+  }
+
+  private validKingDestinations(source: Square): immutable.Set<Square> {
+    return this.destinations(source, [
+      [1, 0],
+      [1, 1],
+      [0, 1],
+      [-1, 1],
+      [-1, 0],
+      [-1, -1],
+      [0, -1],
+      [1, -1],
+    ]).filter((s) => this.empty(s) || this.occupiedByThem(s));
   }
 
   private validLineDestinations(
@@ -251,7 +264,7 @@ export class Game implements immutable.ValueObject {
   private destinations(source: Square, deltas: Array<[number, number]>): immutable.Set<Square> {
     return immutable
       .Set(deltas)
-      .map(([df, fc]) => this.destination(source, df, fc))
+      .map(([df, dc]) => this.destination(source, df, dc))
       .filter((s) => s !== undefined) as immutable.Set<Square>;
   }
 
