@@ -99,20 +99,22 @@ export class Game implements immutable.ValueObject {
 
   move(source: Square, destination: Square): Game {
     if (this.validDestinationSet(source).includes(destination)) {
-      let newGame = this.mapBoard((board) => {
-        return board.set(destination, board.get(source)!).delete(source);
-      });
+      let newGame = this.justMove(source, destination);
 
       if (Math.abs(destination.file - source.file) === 2) {
-        newGame = newGame.withEnPassantSquare(this.destination(destination, -1, 0)!);
+        return newGame.withEnPassantSquare(this.destination(destination, -1, 0)!);
       } else {
-        newGame = newGame.removeEnPassantSquare();
+        return newGame.removeEnPassantSquare();
       }
-
-      return newGame.swapNextToMove();
     }
 
     return this;
+  }
+
+  private justMove(source: Square, destination: Square): Game {
+    return this.mapBoard((board) => {
+      return board.set(destination, board.get(source)!).delete(source);
+    }).swapNextToMove();
   }
 
   allValidDestinations(): Map<Square, Square[]> {
@@ -125,6 +127,10 @@ export class Game implements immutable.ValueObject {
 
   // TODO consider withMutations
   private validDestinationSet(source: Square): immutable.Set<Square> {
+    return this.pieceDestinations(source).filter((d) => !this.justMove(source, d).isInCheck(this.state.nextToMove));
+  }
+
+  private pieceDestinations(source: Square): immutable.Set<Square> {
     const piece = this.getPiece(source);
     if (piece === undefined || piece.colour !== this.state.nextToMove) {
       return immutable.Set();
@@ -144,6 +150,18 @@ export class Game implements immutable.ValueObject {
       case Piece.Type.KING:
         return this.validKingDestinations(source);
     }
+  }
+
+  private isInCheck(colour: Piece.Colour): boolean {
+    const kingSquare = this.state.board.findKey((p) => p.type === Piece.Type.KING && p.colour === colour);
+    if (kingSquare === undefined) {
+      return false;
+    }
+    return (
+      this.state.board.find(
+        (p, s) => p.colour !== colour && this.pieceDestinations(s).includes(kingSquare)
+      ) !== undefined
+    );
   }
 
   private validPawnDestinations(source: Square): immutable.Set<Square> {

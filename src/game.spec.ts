@@ -83,6 +83,11 @@ describe("Game", () => {
       checkAllowedMoves(game, "e7", ["e6", "e5"]);
     });
 
+    it("prevents from moving into check", () => {
+      const game = fen.parse("r1bqkbnr/ppp2ppp/2n5/1B1pp3/4P3/2N2N2/PPPP1PPP/R1BQK2R b")!;
+      checkAllowedMoves(game, "c6", []);
+    });
+
     describe("pawns", () => {
       it("moves the pawn", () => {
         let game = fen.parse("8/8/4p3/8/8/4P3/5P2/8 w")!;
@@ -224,7 +229,7 @@ describe("Game", () => {
       it("doesn't allow non-existing or occupied-by-us squares", () => {
         const game = chess.Game.empty()
           .addPiece(chess.Piece.fromString("K")!, chess.Square.fromString("e1")!)
-          .addPiece(chess.Piece.fromString("p")!, chess.Square.fromString("e2")!)
+          .addPiece(chess.Piece.fromString("n")!, chess.Square.fromString("e2")!)
           .addPiece(chess.Piece.fromString("P")!, chess.Square.fromString("d1")!);
 
         checkAllowedMoves(game, "e1", ["e2", "d2", "f2", "f1"]);
