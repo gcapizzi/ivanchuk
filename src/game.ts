@@ -129,6 +129,8 @@ export class Game implements immutable.ValueObject {
         return this.validKnightDestinations(source);
       case Piece.Type.BISHOP:
         return this.validBishopDestinations(source);
+      case Piece.Type.ROOK:
+        return this.validRookDestinations(source);
     }
 
     return immutable.Set();
@@ -170,21 +172,45 @@ export class Game implements immutable.ValueObject {
       .union(this.validDiagonalDestinations(source, 1, -1));
   }
 
-  private validDiagonalDestinations(source: Square, xSign: number, ySign: number): immutable.Set<Square> {
-    const diagonal = immutable
-      .Range(xSign, Infinity * xSign, xSign)
-      .zip(immutable.Range(ySign, Infinity * ySign, ySign))
+  private validRookDestinations(source: Square): immutable.Set<Square> {
+    return this.validVerticalDestinations(source, 1)
+      .union(this.validVerticalDestinations(source, -1))
+      .union(this.validHorizontalDestinations(source, 1))
+      .union(this.validHorizontalDestinations(source, -1));
+  }
+
+  private validLineDestinations(
+    source: Square,
+    deltas: immutable.Seq.Indexed<[number, number]>
+  ): immutable.Set<Square> {
+    let line = deltas
       .map(([dc, df]) => source.addColumn(dc)?.addFile(df))
       .takeWhile((s) => s !== undefined)
       .toList() as immutable.List<Square>;
 
-    let dests = diagonal.takeWhile((s) => this.empty(s)).toSet();
-    const block = diagonal.find((s) => !this.empty(s));
-    if (block && this.occupiedByThem(block)) { // capture
+    let dests = line.takeWhile((s) => this.empty(s)).toSet();
+    const block = line.find((s) => !this.empty(s));
+    // capture
+    if (block && this.occupiedByThem(block)) {
       return dests.add(block);
     }
 
     return dests;
+  }
+
+  private validDiagonalDestinations(source: Square, xSign: number, ySign: number): immutable.Set<Square> {
+    return this.validLineDestinations(
+      source,
+      immutable.Range(xSign, Infinity * xSign, xSign).zip(immutable.Range(ySign, Infinity * ySign, ySign))
+    );
+  }
+
+  private validVerticalDestinations(source: Square, ySign: number): immutable.Set<Square> {
+    return this.validLineDestinations(source, immutable.Repeat(0).zip(immutable.Range(ySign, Infinity * ySign, ySign)));
+  }
+
+  private validHorizontalDestinations(source: Square, xSign: number): immutable.Set<Square> {
+    return this.validLineDestinations(source, immutable.Range(xSign, Infinity * xSign, xSign).zip(immutable.Repeat(0)));
   }
 
   private mapBoard(fn: (board: immutable.Map<Square, Piece>) => immutable.Map<Square, Piece>): Game {
