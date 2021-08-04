@@ -184,5 +184,35 @@ describe("Game", () => {
         checkAllowedMoves(game, "d4", ["d2", "d3", "d5", "d6", "d7", "d8", "a4", "b4", "c4", "e4"]);
       });
     });
+
+    describe("queens", () => {
+      it("moves the queen", () => {
+        const game = chess.Game.empty().addPiece(chess.Piece.fromString("Q")!, chess.Square.fromString("d4")!);
+        // prettier-ignore
+        checkAllowedMoves(game, "d4", [
+          "d1", "d2", "d3", "d5", "d6", "d7", "d8",
+          "a4", "b4", "c4", "e4", "f4", "g4", "h4",
+          "a1", "b2", "c3", "e5", "f6", "g7", "h8",
+          "a7", "b6", "c5", "e3", "f2", "g1",
+        ]);
+      });
+
+      it("doesn't allow blocked squares", () => {
+        const game = chess.Game.empty()
+          .addPiece(chess.Piece.fromString("Q")!, chess.Square.fromString("d4")!)
+          .addPiece(chess.Piece.fromString("n")!, chess.Square.fromString("g7")!)
+          .addPiece(chess.Piece.fromString("b")!, chess.Square.fromString("d5")!)
+          .addPiece(chess.Piece.fromString("R")!, chess.Square.fromString("b4")!)
+          .addPiece(chess.Piece.fromString("P")!, chess.Square.fromString("b6")!);
+
+        // prettier-ignore
+        checkAllowedMoves(game, "d4", [
+          "d1", "d2", "d3", "d5",
+          "c4", "e4", "f4", "g4", "h4",
+          "a1", "b2", "c3", "e5", "f6", "g7",
+          "c5", "e3", "f2", "g1",
+        ]);
+      });
+    });
   });
 });

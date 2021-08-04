@@ -131,6 +131,8 @@ export class Game implements immutable.ValueObject {
         return this.validBishopDestinations(source);
       case Piece.Type.ROOK:
         return this.validRookDestinations(source);
+      case Piece.Type.QUEEN:
+        return this.validQueenDestinations(source);
     }
 
     return immutable.Set();
@@ -177,6 +179,17 @@ export class Game implements immutable.ValueObject {
       .union(this.validVerticalDestinations(source, -1))
       .union(this.validHorizontalDestinations(source, 1))
       .union(this.validHorizontalDestinations(source, -1));
+  }
+
+  private validQueenDestinations(source: Square): immutable.Set<Square> {
+    return this.validVerticalDestinations(source, 1)
+      .union(this.validVerticalDestinations(source, -1))
+      .union(this.validHorizontalDestinations(source, 1))
+      .union(this.validHorizontalDestinations(source, -1))
+      .union(this.validDiagonalDestinations(source, -1, -1))
+      .union(this.validDiagonalDestinations(source, 1, 1))
+      .union(this.validDiagonalDestinations(source, -1, 1))
+      .union(this.validDiagonalDestinations(source, 1, -1));
   }
 
   private validLineDestinations(
