@@ -100,13 +100,13 @@ describe("Game", () => {
         checkAllowedMoves(game, "f7", ["f6", "f5"]);
         checkAllowedMoves(game, "e6", ["e5"]);
 
-        game = fen.parse("8/PPP5/PpP5/PPP5/ppp5/pPp5/ppp5/8 w")!;
-        checkAllowedMoves(game, "b3", ["a4", "c4"]);
-        checkAllowedMoves(game, "b6", []);
+        game = fen.parse("PPP5/PpP5/PPP5/8/8/ppp5/pPp5/ppp5 w")!;
+        checkAllowedMoves(game, "b2", ["a3", "c3"]);
+        checkAllowedMoves(game, "b7", []);
 
-        game = fen.parse("8/PPP5/PpP5/PPP5/ppp5/pPp5/ppp5/8 b")!;
-        checkAllowedMoves(game, "b3", []);
-        checkAllowedMoves(game, "b6", ["a5", "c5"]);
+        game = fen.parse("PPP5/PpP5/PPP5/8/8/ppp5/pPp5/ppp5 b")!;
+        checkAllowedMoves(game, "b2", []);
+        checkAllowedMoves(game, "b7", ["a6", "c6"]);
       });
 
       it("allows en passant captures", () => {

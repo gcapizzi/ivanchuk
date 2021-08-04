@@ -171,7 +171,7 @@ export class Game implements immutable.ValueObject {
     }
 
     return this.destinations(source, frontMoves)
-      .filter((s) => this.empty(s!))
+      .takeWhile((s) => this.empty(s!))
       .union(
         this.destinations(source, [
           [1, -1],
