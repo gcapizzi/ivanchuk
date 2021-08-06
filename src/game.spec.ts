@@ -118,6 +118,11 @@ describe("Game", () => {
           .move(chess.Square.fromString("d2")!, chess.Square.fromString("d4")!);
 
         checkAllowedMoves(game, "c4", ["c3", "d3"]);
+        expect(
+          game
+            .move(chess.Square.fromString("c4")!, chess.Square.fromString("d3")!)
+            .getPiece(chess.Square.fromString("d4")!)
+        ).toBeUndefined();
 
         let missedEnPassantGame = game
           .move(chess.Square.fromString("a7")!, chess.Square.fromString("a6")!)

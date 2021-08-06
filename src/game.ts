@@ -102,10 +102,16 @@ export class Game implements immutable.ValueObject {
       let newGame = this.justMove(source, destination);
 
       if (Math.abs(destination.file - source.file) === 2) {
-        return newGame.withEnPassantSquare(this.destination(destination, -1, 0)!);
+        newGame = newGame.withEnPassantSquare(this.destination(destination, -1, 0)!);
       } else {
-        return newGame.removeEnPassantSquare();
+        newGame = newGame.removeEnPassantSquare();
       }
+
+      if (this.enPassant(destination)) {
+        newGame = newGame.removePiece(this.destination(destination, -1, 0)!);
+      }
+
+      return newGame;
     }
 
     return this;
