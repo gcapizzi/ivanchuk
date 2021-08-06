@@ -241,4 +241,37 @@ describe("Game", () => {
       });
     });
   });
+
+  describe("en passant square", () => {
+    it("gets set when a pawn moves to squares ahead", () => {
+      expect(
+        chess.Game.startingPosition()
+          .move(chess.Square.fromString("e2")!, chess.Square.fromString("e4")!)
+          .getEnPassantSquare()
+      ).toEqualValue(chess.Square.fromString("e3")!);
+      expect(
+        chess.Game.startingPosition()
+          .withNextToMove(chess.Piece.Colour.BLACK)
+          .move(chess.Square.fromString("e7")!, chess.Square.fromString("e5")!)
+          .getEnPassantSquare()
+      ).toEqualValue(chess.Square.fromString("e6")!);
+      expect(
+        chess.Game.startingPosition()
+          .move(chess.Square.fromString("b1")!, chess.Square.fromString("c3")!)
+          .getEnPassantSquare()
+      ).toBeUndefined();
+    });
+
+    it("can be set and removed programmatically", () => {
+      expect(
+        chess.Game.startingPosition().withEnPassantSquare(chess.Square.fromString("e4")!).getEnPassantSquare()
+      ).toEqualValue(chess.Square.fromString("e4")!);
+      expect(
+        chess.Game.startingPosition()
+          .withEnPassantSquare(chess.Square.fromString("e4")!)
+          .removeEnPassantSquare()
+          .getEnPassantSquare()
+      ).toBeUndefined();
+    });
+  });
 });

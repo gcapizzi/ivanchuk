@@ -89,6 +89,10 @@ export class Game implements immutable.ValueObject {
     return this.state.nextToMove;
   }
 
+  getEnPassantSquare(): Square | undefined {
+    return this.state.enPassantSquare;
+  }
+
   withEnPassantSquare(enPassantSquare: Square): Game {
     return new Game(this.state.set("enPassantSquare", enPassantSquare));
   }
@@ -101,7 +105,7 @@ export class Game implements immutable.ValueObject {
     if (this.validDestinationSet(source).includes(destination)) {
       let newGame = this.justMove(source, destination);
 
-      if (Math.abs(destination.file - source.file) === 2) {
+      if (this.getPiece(source)?.type === Piece.Type.PAWN && Math.abs(destination.file - source.file) === 2) {
         newGame = newGame.withEnPassantSquare(this.destination(destination, -1, 0)!);
       } else {
         newGame = newGame.removeEnPassantSquare();
