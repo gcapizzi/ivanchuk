@@ -124,7 +124,7 @@ export class Game implements immutable.ValueObject {
   }
 
   allValidDestinations(): Map<Square, Square[]> {
-    return new Map(this.state.board.mapEntries(([s, p]) => [s, this.validDestinations(s)]).entries());
+    return new Map(this.state.board.mapEntries(([s, _]) => [s, this.validDestinations(s)]).entries());
   }
 
   validDestinations(square: Square): Square[] {
@@ -164,9 +164,8 @@ export class Game implements immutable.ValueObject {
       return false;
     }
     return (
-      this.state.board.find(
-        (p, s) => p.colour !== colour && this.pieceDestinations(s).includes(kingSquare)
-      ) !== undefined
+      this.state.board.find((p, s) => p.colour !== colour && this.pieceDestinations(s).includes(kingSquare)) !==
+      undefined
     );
   }
 
@@ -237,10 +236,7 @@ export class Game implements immutable.ValueObject {
     ]).filter((s) => this.empty(s) || this.occupiedByThem(s));
   }
 
-  private lineDestinations(
-    source: Square,
-    deltas: immutable.Seq.Indexed<[number, number]>
-  ): immutable.Set<Square> {
+  private lineDestinations(source: Square, deltas: immutable.Seq.Indexed<[number, number]>): immutable.Set<Square> {
     let line = deltas
       .map(([dc, df]) => source.addColumn(dc)?.addFile(df))
       .takeWhile((s) => s !== undefined)
