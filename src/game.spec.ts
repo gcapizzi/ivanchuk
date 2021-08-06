@@ -6,13 +6,15 @@ import { checkAllowedMoves } from "./spec_utils";
 describe("Game", () => {
   describe("empty", () => {
     it("returns a Game with no pieces and white to move", () => {
-      expect(chess.Game.empty()).toEqualValue(fen.parse("8/8/8/8/8/8/8/8 w")!);
+      expect(chess.Game.empty()).toEqualValue(fen.parse("8/8/8/8/8/8/8/8 w - -")!);
     });
   });
 
   describe("fromStartingPosition", () => {
     it("returns a Game from the starting position with white to move", () => {
-      expect(chess.Game.startingPosition()).toEqualValue(fen.parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w")!);
+      expect(chess.Game.startingPosition()).toEqualValue(
+        fen.parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - -")!
+      );
     });
   });
 
@@ -84,27 +86,27 @@ describe("Game", () => {
     });
 
     it("prevents from moving into check", () => {
-      const game = fen.parse("r1bqkbnr/ppp2ppp/2n5/1B1pp3/4P3/2N2N2/PPPP1PPP/R1BQK2R b")!;
+      const game = fen.parse("r1bqkbnr/ppp2ppp/2n5/1B1pp3/4P3/2N2N2/PPPP1PPP/R1BQK2R b - -")!;
       checkAllowedMoves(game, "c6", []);
     });
 
     describe("pawns", () => {
       it("moves the pawn", () => {
-        let game = fen.parse("8/8/4p3/8/8/4P3/5P2/8 w")!;
+        let game = fen.parse("8/8/4p3/8/8/4P3/5P2/8 w - -")!;
         checkAllowedMoves(game, "f2", ["f3", "f4"]);
         checkAllowedMoves(game, "e3", ["e4"]);
         checkAllowedMoves(game, "e6", []);
 
-        game = fen.parse("8/5p2/4p3/8/8/4P3/8/8 b")!;
+        game = fen.parse("8/5p2/4p3/8/8/4P3/8/8 b - -")!;
         checkAllowedMoves(game, "e3", []);
         checkAllowedMoves(game, "f7", ["f6", "f5"]);
         checkAllowedMoves(game, "e6", ["e5"]);
 
-        game = fen.parse("PPP5/PpP5/PPP5/8/8/ppp5/pPp5/ppp5 w")!;
+        game = fen.parse("PPP5/PpP5/PPP5/8/8/ppp5/pPp5/ppp5 w - -")!;
         checkAllowedMoves(game, "b2", ["a3", "c3"]);
         checkAllowedMoves(game, "b7", []);
 
-        game = fen.parse("PPP5/PpP5/PPP5/8/8/ppp5/pPp5/ppp5 b")!;
+        game = fen.parse("PPP5/PpP5/PPP5/8/8/ppp5/pPp5/ppp5 b - -")!;
         checkAllowedMoves(game, "b2", []);
         checkAllowedMoves(game, "b7", ["a6", "c6"]);
       });

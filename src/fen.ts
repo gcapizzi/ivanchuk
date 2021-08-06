@@ -3,9 +3,12 @@ import * as chess from "./chess";
 // TODO handle invalid strings
 export function parse(fen: string): chess.Game | undefined {
   let game = chess.Game.empty();
-  const [board, nextToMove] = fen.split(" ");
+  const [board, nextToMove, _, enPassant] = fen.split(" ");
   if (nextToMove.toLowerCase() === "b") {
     game = game.withNextToMove(chess.Piece.Colour.BLACK);
+  }
+  if (enPassant !== "-") {
+    game = game.withEnPassantSquare(chess.Square.fromString(enPassant)!);
   }
 
   const files = board.split("/");
@@ -55,5 +58,11 @@ export function render(game: chess.Game): string {
     nextToMove = "b";
   }
 
-  return fileStrs.join("/") + " " + nextToMove;
+  const enPassantSquare = game.getEnPassantSquare();
+  let enPassant = "-"
+  if (enPassantSquare !== undefined) {
+    enPassant = enPassantSquare.toString().toLowerCase();
+  }
+
+  return fileStrs.join("/") + " " + nextToMove + " - " + enPassant;
 }
