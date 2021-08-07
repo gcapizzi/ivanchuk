@@ -1,3 +1,4 @@
+import * as immutable from "immutable";
 import * as chess from "./chess";
 
 // TODO handle invalid strings
@@ -11,47 +12,35 @@ export function parse(fen: string): chess.Game | undefined {
     game = game.withEnPassantSquare(chess.Square.fromString(enPassant)!);
   }
 
-  const files = board.split("/");
-  let file = chess.Square.File._8;
-  for (let f of files) {
-    let col = chess.Square.Column.A;
-    for (let c of f.split("")) {
-      let emptySquares = parseInt(c);
-      if (isNaN(emptySquares)) {
-        game = game.addPiece(chess.Piece.fromString(c)!, new chess.Square(col, file));
-        col += 1;
-      } else {
-        col += emptySquares;
-      }
+  return immutable
+    .Range(chess.Square.File._8, chess.Square.File._1 - 1, -1)
+    .zip(immutable.Seq(board.split("/")))
+    .flatMap(([file, fileStr]) => parseFile(file, fileStr))
+    .reduce((g, [s, p]) => g.addPiece(p, s), game);
+}
+
+function parseFile(file: chess.Square.File, fileStr: string): immutable.Seq.Indexed<[chess.Square, chess.Piece]> {
+  const pieces = immutable.Seq(fileStr.split("")).flatMap((c) => {
+    let emptySquares = parseInt(c);
+    if (isNaN(emptySquares)) {
+      return [chess.Piece.fromString(c)!];
+    } else {
+      return Array<chess.Piece>(emptySquares);
     }
-    file -= 1;
-  }
-  return game;
+  });
+
+  return immutable
+    .Seq(chess.Square.Columns)
+    .map((c) => new chess.Square(c, file))
+    .zip(pieces)
+    .filter(([_, p]) => p !== undefined);
 }
 
 export function render(game: chess.Game): string {
-  let fileStrs = [];
-
-  for (let file of chess.Square.Files.slice().reverse()) {
-    let fileStr = "";
-    let counter = 0;
-    for (let column of chess.Square.Columns) {
-      const piece = game.getPiece(new chess.Square(column, file));
-      if (piece == undefined) {
-        counter += 1;
-      } else {
-        if (counter > 0) {
-          fileStr += counter;
-          counter = 0;
-        }
-        fileStr += piece.toString();
-      }
-    }
-    if (counter > 0) {
-      fileStr += counter;
-    }
-    fileStrs.push(fileStr);
-  }
+  const board = immutable
+    .Range(chess.Square.File._8, chess.Square.File._1 - 1, -1)
+    .map((f) => renderFile(game, f))
+    .join("/");
 
   let nextToMove = "w";
   if (game.getNextToMove() === chess.Piece.Colour.BLACK) {
@@ -59,10 +48,33 @@ export function render(game: chess.Game): string {
   }
 
   const enPassantSquare = game.getEnPassantSquare();
-  let enPassant = "-"
+  let enPassant = "-";
   if (enPassantSquare !== undefined) {
     enPassant = enPassantSquare.toString().toLowerCase();
   }
 
-  return fileStrs.join("/") + " " + nextToMove + " - " + enPassant;
+  return board + " " + nextToMove + " - " + enPassant;
+}
+
+function renderFile(game: chess.Game, file: chess.Square.File) {
+  const [board, count] = immutable
+    .Seq(chess.Square.Columns)
+    .map((c) => new chess.Square(c, file))
+    .map((s) => game.getPiece(s))
+    .reduce(
+      ([s, c], p) => {
+        if (p !== undefined) {
+          return [s + numToString(c) + p.toString(), 0] as [string, number];
+        } else {
+          return [s, c + 1] as [string, number];
+        }
+      },
+      ["", 0] as [string, number]
+    );
+
+  return board + numToString(count);
+}
+
+function numToString(n: number): string {
+  return n === 0 ? "" : n.toString();
 }
