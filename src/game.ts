@@ -102,8 +102,13 @@ export class Game implements immutable.ValueObject {
   }
 
   move(source: Square, destination: Square): Game {
-    if (this.validDestinationSet(source).includes(destination)) {
-      let newGame = this.justMove(source, destination);
+    const piece = this.getPiece(source);
+    if (piece === undefined) {
+      return this;
+    }
+
+    if (this.validDestinationSet(source, piece).includes(destination)) {
+      let newGame = this.justMove(source, destination).swapNextToMove();
 
       if (this.getPiece(source)?.type === Piece.Type.PAWN && Math.abs(destination.file - source.file) === 2) {
         newGame = newGame.withEnPassantSquare(this.destination(destination, -1, 0)!);
@@ -124,58 +129,58 @@ export class Game implements immutable.ValueObject {
   private justMove(source: Square, destination: Square): Game {
     return this.mapBoard((board) => {
       return board.set(destination, board.get(source)!).delete(source);
-    }).swapNextToMove();
+    });
   }
 
   allValidDestinations(): Map<Square, Square[]> {
-    return new Map(this.state.board.mapEntries(([s, _]) => [s, this.validDestinations(s)]).entries());
+    return new Map(this.state.board.mapEntries(([s, p]) => [s, this.validDestinations(s, p)]).entries());
   }
 
-  validDestinations(square: Square): Square[] {
-    return this.validDestinationSet(square).toArray();
+  private validDestinations(square: Square, piece: Piece): Square[] {
+    return this.validDestinationSet(square, piece).toArray();
   }
 
   // TODO consider withMutations
-  private validDestinationSet(source: Square): immutable.Set<Square> {
-    return this.pieceDestinations(source).filter((d) => !this.justMove(source, d).isInCheck(this.state.nextToMove));
-  }
-
-  private pieceDestinations(source: Square): immutable.Set<Square> {
-    const piece = this.getPiece(source);
-    if (piece === undefined || piece.colour !== this.state.nextToMove) {
+  private validDestinationSet(source: Square, piece: Piece): immutable.Set<Square> {
+    if (piece.colour !== this.state.nextToMove) {
       return immutable.Set();
     }
 
+    return this.pieceDestinations(source, piece).filter((d) => {
+      return !this.justMove(source, d).isInCheck();
+    });
+  }
+
+  private pieceDestinations(source: Square, piece: Piece): immutable.Set<Square> {
     switch (piece.type) {
       case Piece.Type.PAWN:
-        return this.pawnDestinations(source);
+        return this.pawnDestinations(source, piece.colour);
       case Piece.Type.KNIGHT:
-        return this.knightDestinations(source);
+        return this.knightDestinations(source, piece.colour);
       case Piece.Type.BISHOP:
-        return this.bishopDestinations(source);
+        return this.bishopDestinations(source, piece.colour);
       case Piece.Type.ROOK:
-        return this.rookDestinations(source);
+        return this.rookDestinations(source, piece.colour);
       case Piece.Type.QUEEN:
-        return this.queenDestinations(source);
+        return this.queenDestinations(source, piece.colour);
       case Piece.Type.KING:
-        return this.kingDestinations(source);
+        return this.kingDestinations(source, piece.colour);
     }
   }
 
-  private isInCheck(colour: Piece.Colour): boolean {
-    const kingSquare = this.state.board.findKey((p) => p.type === Piece.Type.KING && p.colour === colour);
+  private isInCheck(): boolean {
+    const kingSquare = this.state.board.findKey(
+      (p) => p.type === Piece.Type.KING && p.colour === this.state.nextToMove
+    );
     if (kingSquare === undefined) {
       return false;
     }
-    return (
-      this.state.board.find((p, s) => p.colour !== colour && this.pieceDestinations(s).includes(kingSquare)) !==
-      undefined
-    );
+    return this.isUnderAttack(kingSquare);
   }
 
-  private pawnDestinations(source: Square): immutable.Set<Square> {
+  private pawnDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
     let frontMoves: Array<[number, number]> = [[1, 0]];
-    if (this.onInitialFile(source)) {
+    if (this.onInitialPawnFile(source)) {
       frontMoves.push([2, 0]);
     }
 
@@ -185,11 +190,11 @@ export class Game implements immutable.ValueObject {
         this.destinations(source, [
           [1, -1],
           [1, 1],
-        ]).filter((s) => this.occupiedByThem(s!) || this.enPassant(s!))
+        ]).filter((s) => this.occupiedByThem(s!, us) || this.enPassant(s!))
       );
   }
 
-  private knightDestinations(source: Square): immutable.Set<Square> {
+  private knightDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
     return this.destinations(source, [
       [2, 1],
       [2, -1],
@@ -199,35 +204,35 @@ export class Game implements immutable.ValueObject {
       [1, -2],
       [-1, 2],
       [-1, -2],
-    ]).filter((s) => this.empty(s) || this.occupiedByThem(s));
+    ]).filter((s) => this.empty(s) || this.occupiedByThem(s, us));
   }
 
-  private bishopDestinations(source: Square): immutable.Set<Square> {
-    return this.diagonalDestinations(source, -1, -1)
-      .union(this.diagonalDestinations(source, 1, 1))
-      .union(this.diagonalDestinations(source, -1, 1))
-      .union(this.diagonalDestinations(source, 1, -1));
+  private bishopDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
+    return this.diagonalDestinations(source, us, -1, -1)
+      .union(this.diagonalDestinations(source, us, 1, 1))
+      .union(this.diagonalDestinations(source, us, -1, 1))
+      .union(this.diagonalDestinations(source, us, 1, -1));
   }
 
-  private rookDestinations(source: Square): immutable.Set<Square> {
-    return this.verticalDestinations(source, 1)
-      .union(this.verticalDestinations(source, -1))
-      .union(this.horizontalDestinations(source, 1))
-      .union(this.horizontalDestinations(source, -1));
+  private rookDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
+    return this.verticalDestinations(source, us, 1)
+      .union(this.verticalDestinations(source, us, -1))
+      .union(this.horizontalDestinations(source, us, 1))
+      .union(this.horizontalDestinations(source, us, -1));
   }
 
-  private queenDestinations(source: Square): immutable.Set<Square> {
-    return this.verticalDestinations(source, 1)
-      .union(this.verticalDestinations(source, -1))
-      .union(this.horizontalDestinations(source, 1))
-      .union(this.horizontalDestinations(source, -1))
-      .union(this.diagonalDestinations(source, -1, -1))
-      .union(this.diagonalDestinations(source, 1, 1))
-      .union(this.diagonalDestinations(source, -1, 1))
-      .union(this.diagonalDestinations(source, 1, -1));
+  private queenDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
+    return this.verticalDestinations(source, us, 1)
+      .union(this.verticalDestinations(source, us, -1))
+      .union(this.horizontalDestinations(source, us, 1))
+      .union(this.horizontalDestinations(source, us, -1))
+      .union(this.diagonalDestinations(source, us, -1, -1))
+      .union(this.diagonalDestinations(source, us, 1, 1))
+      .union(this.diagonalDestinations(source, us, -1, 1))
+      .union(this.diagonalDestinations(source, us, 1, -1));
   }
 
-  private kingDestinations(source: Square): immutable.Set<Square> {
+  private kingDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
     return this.destinations(source, [
       [1, 0],
       [1, 1],
@@ -237,10 +242,14 @@ export class Game implements immutable.ValueObject {
       [-1, -1],
       [0, -1],
       [1, -1],
-    ]).filter((s) => this.empty(s) || this.occupiedByThem(s));
+    ]).filter((s) => this.empty(s) || this.occupiedByThem(s, us));
   }
 
-  private lineDestinations(source: Square, deltas: immutable.Seq.Indexed<[number, number]>): immutable.Set<Square> {
+  private lineDestinations(
+    source: Square,
+    us: Piece.Colour,
+    deltas: immutable.Seq.Indexed<[number, number]>
+  ): immutable.Set<Square> {
     let line = deltas
       .map(([dc, df]) => source.addColumn(dc)?.addFile(df))
       .takeWhile((s) => s !== undefined)
@@ -249,35 +258,44 @@ export class Game implements immutable.ValueObject {
     let dests = line.takeWhile((s) => this.empty(s)).toSet();
     const block = line.find((s) => !this.empty(s));
     // capture
-    if (block && this.occupiedByThem(block)) {
+    if (block && this.occupiedByThem(block, us)) {
       return dests.add(block);
     }
 
     return dests;
   }
 
-  private diagonalDestinations(source: Square, xSign: number, ySign: number): immutable.Set<Square> {
+  private diagonalDestinations(source: Square, us: Piece.Colour, xSign: number, ySign: number): immutable.Set<Square> {
     return this.lineDestinations(
       source,
+      us,
       immutable.Range(xSign, Infinity * xSign, xSign).zip(immutable.Range(ySign, Infinity * ySign, ySign))
     );
   }
 
-  private verticalDestinations(source: Square, ySign: number): immutable.Set<Square> {
-    return this.lineDestinations(source, immutable.Repeat(0).zip(immutable.Range(ySign, Infinity * ySign, ySign)));
+  private verticalDestinations(source: Square, us: Piece.Colour, ySign: number): immutable.Set<Square> {
+    return this.lineDestinations(source, us, immutable.Repeat(0).zip(immutable.Range(ySign, Infinity * ySign, ySign)));
   }
 
-  private horizontalDestinations(source: Square, xSign: number): immutable.Set<Square> {
-    return this.lineDestinations(source, immutable.Range(xSign, Infinity * xSign, xSign).zip(immutable.Repeat(0)));
+  private horizontalDestinations(source: Square, us: Piece.Colour, xSign: number): immutable.Set<Square> {
+    return this.lineDestinations(source, us, immutable.Range(xSign, Infinity * xSign, xSign).zip(immutable.Repeat(0)));
   }
 
   private mapBoard(fn: (board: immutable.Map<Square, Piece>) => immutable.Map<Square, Piece>): Game {
     return new Game(this.state.update("board", fn));
   }
 
-  private occupiedByThem(square: Square): boolean {
+  private occupiedByThem(square: Square, us: Piece.Colour): boolean {
     const piece = this.getPiece(square);
-    return piece !== undefined && piece.colour !== this.state.nextToMove;
+    return piece !== undefined && piece.colour !== us;
+  }
+
+  private isUnderAttack(square: Square): boolean {
+    return (
+      this.state.board.find(
+        (p, s) => p.colour !== this.state.nextToMove && this.pieceDestinations(s, p).includes(square)
+      ) !== undefined
+    );
   }
 
   private empty(square: Square): boolean {
@@ -300,7 +318,7 @@ export class Game implements immutable.ValueObject {
       .filter((s) => s !== undefined) as immutable.Set<Square>;
   }
 
-  private onInitialFile(square: Square) {
+  private onInitialPawnFile(square: Square) {
     if (this.state.nextToMove == Piece.Colour.WHITE) {
       return square.file === Square.File._2;
     } else {
