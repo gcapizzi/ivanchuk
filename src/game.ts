@@ -1,7 +1,6 @@
 import * as immutable from "immutable";
-
-import { Square } from "./square";
 import { Piece } from "./piece";
+import { Square } from "./square";
 
 class State extends immutable.Record({
   board: immutable.Map<Square, Piece>(),

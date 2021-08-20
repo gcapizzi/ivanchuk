@@ -53,17 +53,23 @@ export class Piece implements immutable.ValueObject {
     let str;
     switch (this.type) {
       case Piece.Type.PAWN:
-        str = "P"; break;
+        str = "P";
+        break;
       case Piece.Type.KNIGHT:
-        str = "N"; break;
+        str = "N";
+        break;
       case Piece.Type.BISHOP:
-        str = "B"; break;
+        str = "B";
+        break;
       case Piece.Type.ROOK:
-        str = "R"; break;
+        str = "R";
+        break;
       case Piece.Type.QUEEN:
-        str = "Q"; break;
+        str = "Q";
+        break;
       case Piece.Type.KING:
-        str = "K"; break;
+        str = "K";
+        break;
     }
 
     if (this.colour == Piece.Colour.BLACK) {

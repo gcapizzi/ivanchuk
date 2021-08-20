@@ -1,6 +1,5 @@
 import * as chess from "./chess";
 import * as fen from "./fen";
-
 import { checkAllowedMoves } from "./spec_utils";
 
 describe("Game", () => {
