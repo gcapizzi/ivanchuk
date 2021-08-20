@@ -10,10 +10,10 @@ describe("Game", () => {
     });
   });
 
-  describe("fromStartingPosition", () => {
+  describe("startingPosition", () => {
     it("returns a Game from the starting position with white to move", () => {
       expect(chess.Game.startingPosition()).toEqualValue(
-        fen.parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - -")!
+        fen.parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w kKqQ -")!
       );
     });
   });
@@ -274,6 +274,128 @@ describe("Game", () => {
           .removeEnPassantSquare()
           .getEnPassantSquare()
       ).toBeUndefined();
+    });
+  });
+
+  describe("castling", () => {
+    describe("short", () => {
+      it("allows to castle short", () => {
+        let game = fen.parse("r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KkQq -")!;
+        checkAllowedMoves(game, "e1", ["e2", "f1", "g1"]);
+
+        game = game.move(chess.Square.fromString("e1")!, chess.Square.fromString("g1")!);
+        expect(game.getPiece(chess.Square.fromString("g1")!)).toEqualValue(chess.Piece.fromString("K")!);
+        expect(game.getPiece(chess.Square.fromString("f1")!)).toEqualValue(chess.Piece.fromString("R")!);
+      });
+
+      describe("if short castling is disallowed", () => {
+        it("does not allow to castle", () => {
+          let game = fen.parse("r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w kQq -")!;
+          checkAllowedMoves(game, "e1", ["e2", "f1"]);
+        });
+      });
+
+      describe("if pieces are in the way", () => {
+        it("does not allow to castle", () => {
+          let game = fen.parse("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w K -")!;
+          checkAllowedMoves(game, "e1", ["e2"]);
+        });
+      });
+
+      describe("if the king is checked, or any of the transit squares is attacked", () => {
+        it("does not allow to castle", () => {
+          let game = fen.parse("r2qk1nr/ppp2ppp/2n1b3/3pP3/1b2P3/3B1N2/PPP2PPP/RNBQK2R w K -")!;
+          checkAllowedMoves(game, "e1", ["e2", "f1"]);
+          game = fen.parse("r2qkbnr/ppp2ppp/2n5/4P3/3pPN2/3b4/PPP2PPP/RNBQK2R w K -")!;
+          checkAllowedMoves(game, "e1", ["d2"]);
+          game = fen.parse("r1bqk1nr/ppp2ppp/2n5/4P3/3pPN2/4bP2/PPP3PP/RNBQK2R w K -")!;
+          checkAllowedMoves(game, "e1", ["e2", "f1"]);
+        });
+      });
+    });
+
+    describe("long", () => {
+      it("allows to castle long", () => {
+        let game = fen.parse("r1bqkbnr/pp1p1ppp/2n1p3/8/3Q1B2/2N5/PPP1PPPP/R3KBNR w KkQq -")!;
+        checkAllowedMoves(game, "e1", ["d1", "d2", "c1"]);
+
+        game = game.move(chess.Square.fromString("e1")!, chess.Square.fromString("c1")!);
+        expect(game.getPiece(chess.Square.fromString("c1")!)).toEqualValue(chess.Piece.fromString("K")!);
+        expect(game.getPiece(chess.Square.fromString("d1")!)).toEqualValue(chess.Piece.fromString("R")!);
+      });
+
+      describe("if long castling is disallowed", () => {
+        it("does not allow to castle", () => {
+          let game = fen.parse("r1bqkbnr/pp1p1ppp/2n1p3/8/3Q1B2/2N5/PPP1PPPP/R3KBNR w Kkq -")!;
+          checkAllowedMoves(game, "e1", ["d1", "d2"]);
+        });
+      });
+
+      describe("if pieces are in the way", () => {
+        it("does not allow to castle", () => {
+          let game = fen.parse("rnbqkbnr/ppp2ppp/4p3/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR w Q -")!;
+          checkAllowedMoves(game, "e1", ["d2"]);
+
+          game = fen.parse("r1bqkbnr/ppp2ppp/2n1p3/3p4/3P1B2/2N5/PPP1PPPP/R2QKBNR w Q -")!;
+          checkAllowedMoves(game, "e1", ["d2"]);
+        });
+      });
+    });
+
+    it("disallows to castle short or long once the king has been moved", () => {
+      let game = fen
+        .parse("r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KkQq -")!
+        .move(chess.Square.fromString("e1")!, chess.Square.fromString("f1")!)
+        .move(chess.Square.fromString("a7")!, chess.Square.fromString("a6")!)
+        .move(chess.Square.fromString("f1")!, chess.Square.fromString("e1")!);
+
+      expect(game.canCastleShort(chess.Piece.Colour.WHITE)).toEqual(false);
+      expect(game.canCastleShort(chess.Piece.Colour.BLACK)).toEqual(true);
+      expect(game.canCastleLong(chess.Piece.Colour.WHITE)).toEqual(false);
+      expect(game.canCastleLong(chess.Piece.Colour.BLACK)).toEqual(true);
+    });
+
+    it("disallows to castle on the side of a moved rook", () => {
+      let game = fen
+        .parse("r1bqkb1r/pppp1pp1/2n2n1p/1B2p3/4P3/5N1P/PPPP1PP1/RNBQK2R w KkQq -")!
+        .move(chess.Square.fromString("h1")!, chess.Square.fromString("h2")!)
+        .move(chess.Square.fromString("h7")!, chess.Square.fromString("h6")!)
+        .move(chess.Square.fromString("h2")!, chess.Square.fromString("h1")!);
+
+      expect(game.canCastleShort(chess.Piece.Colour.WHITE)).toEqual(false);
+      expect(game.canCastleShort(chess.Piece.Colour.BLACK)).toEqual(true);
+      expect(game.canCastleLong(chess.Piece.Colour.WHITE)).toEqual(true);
+      expect(game.canCastleLong(chess.Piece.Colour.BLACK)).toEqual(true);
+
+      game = game
+        .move(chess.Square.fromString("h8")!, chess.Square.fromString("h7")!)
+        .move(chess.Square.fromString("d2")!, chess.Square.fromString("d4")!)
+        .move(chess.Square.fromString("h7")!, chess.Square.fromString("h8")!);
+
+      expect(game.canCastleShort(chess.Piece.Colour.WHITE)).toEqual(false);
+      expect(game.canCastleShort(chess.Piece.Colour.BLACK)).toEqual(false);
+      expect(game.canCastleLong(chess.Piece.Colour.WHITE)).toEqual(true);
+      expect(game.canCastleLong(chess.Piece.Colour.BLACK)).toEqual(true);
+
+      game = game
+        .move(chess.Square.fromString("a2")!, chess.Square.fromString("a3")!)
+        .move(chess.Square.fromString("a7")!, chess.Square.fromString("a6")!)
+        .move(chess.Square.fromString("a1")!, chess.Square.fromString("a2")!);
+
+      expect(game.canCastleShort(chess.Piece.Colour.WHITE)).toEqual(false);
+      expect(game.canCastleShort(chess.Piece.Colour.BLACK)).toEqual(false);
+      expect(game.canCastleLong(chess.Piece.Colour.WHITE)).toEqual(false);
+      expect(game.canCastleLong(chess.Piece.Colour.BLACK)).toEqual(true);
+
+      game = game
+        .move(chess.Square.fromString("a8")!, chess.Square.fromString("a7")!)
+        .move(chess.Square.fromString("b2")!, chess.Square.fromString("b4")!)
+        .move(chess.Square.fromString("a7")!, chess.Square.fromString("a8")!);
+
+      expect(game.canCastleShort(chess.Piece.Colour.WHITE)).toEqual(false);
+      expect(game.canCastleShort(chess.Piece.Colour.BLACK)).toEqual(false);
+      expect(game.canCastleLong(chess.Piece.Colour.WHITE)).toEqual(false);
+      expect(game.canCastleLong(chess.Piece.Colour.BLACK)).toEqual(false);
     });
   });
 });

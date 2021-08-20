@@ -7,6 +7,8 @@ class State extends immutable.Record({
   board: immutable.Map<Square, Piece>(),
   nextToMove: Piece.Colour.WHITE,
   enPassantSquare: undefined as Square | undefined,
+  shortCastling: immutable.Set<Piece.Colour>(),
+  longCastling: immutable.Set<Piece.Colour>(),
 }) {}
 
 export class Game implements immutable.ValueObject {
@@ -53,7 +55,11 @@ export class Game implements immutable.ValueObject {
       .addPiece(Piece.fromString("k")!, Square.fromString("E8")!)
       .addPiece(Piece.fromString("b")!, Square.fromString("F8")!)
       .addPiece(Piece.fromString("n")!, Square.fromString("G8")!)
-      .addPiece(Piece.fromString("r")!, Square.fromString("H8")!);
+      .addPiece(Piece.fromString("r")!, Square.fromString("H8")!)
+      .allowShortCastling(Piece.Colour.WHITE)
+      .allowShortCastling(Piece.Colour.BLACK)
+      .allowLongCastling(Piece.Colour.WHITE)
+      .allowLongCastling(Piece.Colour.BLACK);
   }
 
   equals(other: Game): boolean {
@@ -89,6 +95,30 @@ export class Game implements immutable.ValueObject {
     return this.state.nextToMove;
   }
 
+  allowShortCastling(colour: Piece.Colour): Game {
+    return new Game(this.state.update("shortCastling", (c) => c.add(colour)));
+  }
+
+  allowLongCastling(colour: Piece.Colour): Game {
+    return new Game(this.state.update("longCastling", (c) => c.add(colour)));
+  }
+
+  disallowShortCastling(colour: Piece.Colour): Game {
+    return new Game(this.state.update("shortCastling", (c) => c.remove(colour)));
+  }
+
+  disallowLongCastling(colour: Piece.Colour): Game {
+    return new Game(this.state.update("longCastling", (c) => c.remove(colour)));
+  }
+
+  canCastleShort(colour: Piece.Colour): boolean {
+    return this.state.shortCastling.includes(colour);
+  }
+
+  canCastleLong(colour: Piece.Colour): boolean {
+    return this.state.longCastling.includes(colour);
+  }
+
   getEnPassantSquare(): Square | undefined {
     return this.state.enPassantSquare;
   }
@@ -108,9 +138,11 @@ export class Game implements immutable.ValueObject {
     }
 
     if (this.validDestinationSet(source, piece).includes(destination)) {
-      let newGame = this.justMove(source, destination).swapNextToMove();
+      let newGame = this.justMove(source, destination);
 
-      if (this.getPiece(source)?.type === Piece.Type.PAWN && Math.abs(destination.file - source.file) === 2) {
+      newGame = newGame.performCastling(piece, source, destination);
+
+      if (piece.type === Piece.Type.PAWN && Math.abs(destination.file - source.file) === 2) {
         newGame = newGame.withEnPassantSquare(this.destination(destination, -1, 0)!);
       } else {
         newGame = newGame.removeEnPassantSquare();
@@ -120,7 +152,19 @@ export class Game implements immutable.ValueObject {
         newGame = newGame.removePiece(this.destination(destination, -1, 0)!);
       }
 
-      return newGame;
+      if (piece.type === Piece.Type.KING) {
+        newGame = newGame.disallowShortCastling(this.state.nextToMove).disallowLongCastling(this.state.nextToMove);
+      }
+
+      if (piece.type == Piece.Type.ROOK && source.column == Square.Column.H) {
+        newGame = newGame.disallowShortCastling(this.state.nextToMove);
+      }
+
+      if (piece.type == Piece.Type.ROOK && source.column == Square.Column.A) {
+        newGame = newGame.disallowLongCastling(this.state.nextToMove);
+      }
+
+      return newGame.swapNextToMove();
     }
 
     return this;
@@ -132,6 +176,7 @@ export class Game implements immutable.ValueObject {
     });
   }
 
+  // TODO test
   allValidDestinations(): Map<Square, Square[]> {
     return new Map(this.state.board.mapEntries(([s, p]) => [s, this.validDestinations(s, p)]).entries());
   }
@@ -146,9 +191,11 @@ export class Game implements immutable.ValueObject {
       return immutable.Set();
     }
 
-    return this.pieceDestinations(source, piece).filter((d) => {
-      return !this.justMove(source, d).isInCheck();
+    let dests = this.pieceDestinations(source, piece).filter((d) => {
+      return !this.justMove(source, d).inCheck();
     });
+
+    return dests.union(this.shortCastleDestinations(source, piece)).union(this.longCastleDestinations(source, piece));
   }
 
   private pieceDestinations(source: Square, piece: Piece): immutable.Set<Square> {
@@ -168,14 +215,14 @@ export class Game implements immutable.ValueObject {
     }
   }
 
-  private isInCheck(): boolean {
+  private inCheck(): boolean {
     const kingSquare = this.state.board.findKey(
       (p) => p.type === Piece.Type.KING && p.colour === this.state.nextToMove
     );
     if (kingSquare === undefined) {
       return false;
     }
-    return this.isUnderAttack(kingSquare);
+    return this.underAttack(kingSquare);
   }
 
   private pawnDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
@@ -281,6 +328,50 @@ export class Game implements immutable.ValueObject {
     return this.lineDestinations(source, us, immutable.Range(xSign, Infinity * xSign, xSign).zip(immutable.Repeat(0)));
   }
 
+  private shortCastleDestinations(source: Square, piece: Piece): immutable.Set<Square> {
+    if (
+      piece.type == Piece.Type.KING &&
+      this.canCastleShort(piece.colour) &&
+      this.getPiece(source.addColumn(1)!) === undefined &&
+      this.getPiece(source.addColumn(2)!) === undefined &&
+      !this.underAttack(source) &&
+      !this.underAttack(source.addColumn(1)!) &&
+      !this.underAttack(source.addColumn(2)!)
+    ) {
+      return immutable.Set.of(source.addColumn(2)!);
+    }
+    return immutable.Set();
+  }
+
+  private longCastleDestinations(source: Square, piece: Piece): immutable.Set<Square> {
+    if (
+      piece.type == Piece.Type.KING &&
+      this.canCastleLong(piece.colour) &&
+      this.getPiece(source.addColumn(-1)!) === undefined &&
+      this.getPiece(source.addColumn(-2)!) === undefined &&
+      this.getPiece(source.addColumn(-3)!) === undefined
+    ) {
+      return immutable.Set.of(source.addColumn(-2)!);
+    }
+    return immutable.Set();
+  }
+
+  private performCastling(piece: Piece, source: Square, destination: Square): Game {
+    if (piece.type !== Piece.Type.KING) {
+      return this;
+    }
+
+    if (destination.column - source.column === 2) {
+      return this.justMove(source.addColumn(3)!, source.addColumn(1)!);
+    }
+
+    if (destination.column - source.column === -2) {
+      return this.justMove(source.addColumn(-4)!, source.addColumn(-1)!);
+    }
+
+    return this;
+  }
+
   private mapBoard(fn: (board: immutable.Map<Square, Piece>) => immutable.Map<Square, Piece>): Game {
     return new Game(this.state.update("board", fn));
   }
@@ -290,7 +381,7 @@ export class Game implements immutable.ValueObject {
     return piece !== undefined && piece.colour !== us;
   }
 
-  private isUnderAttack(square: Square): boolean {
+  private underAttack(square: Square): boolean {
     return (
       this.state.board.find(
         (p, s) => p.colour !== this.state.nextToMove && this.pieceDestinations(s, p).includes(square)

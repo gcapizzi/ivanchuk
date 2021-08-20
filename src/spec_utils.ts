@@ -23,13 +23,13 @@ export function checkAllowedMoves(game: chess.Game, from: string, to: Array<stri
           expect(newGame.getPiece(source)).toBeUndefined();
           expect(newGame.getPiece(destination)?.equals(piece)).toBe(true);
         } catch (e) {
-          throw new Error(`Move was not allowed: ${moveStr} (game: ${fen.render(game)})`);
+          throw new Error(`Move was not allowed: ${moveStr} (${fen.render(game)} -> ${fen.render(newGame)})`);
         }
       } else {
         try {
           expect(newGame.equals(game)).toBe(true);
         } catch (e) {
-          throw new Error(`Move was allowed: ${moveStr} (resulting in: ${fen.render(game)} -> ${fen.render(newGame)})`);
+          throw new Error(`Move was allowed: ${moveStr} (${fen.render(game)} -> ${fen.render(newGame)})`);
         }
       }
     }

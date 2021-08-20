@@ -4,10 +4,32 @@ import * as chess from "./chess";
 // TODO handle invalid strings
 export function parse(fen: string): chess.Game | undefined {
   let game = chess.Game.empty();
-  const [board, nextToMove, _, enPassant] = fen.split(" ");
+
+  const [board, nextToMove, castling, enPassant] = fen.split(" ");
+
   if (nextToMove.toLowerCase() === "b") {
     game = game.withNextToMove(chess.Piece.Colour.BLACK);
   }
+
+  if (castling !== "-") {
+    for (let c of castling) {
+      switch (c) {
+        case "K":
+          game = game.allowShortCastling(chess.Piece.Colour.WHITE);
+          break;
+        case "k":
+          game = game.allowShortCastling(chess.Piece.Colour.BLACK);
+          break;
+        case "Q":
+          game = game.allowLongCastling(chess.Piece.Colour.WHITE);
+          break;
+        case "q":
+          game = game.allowLongCastling(chess.Piece.Colour.BLACK);
+          break;
+      }
+    }
+  }
+
   if (enPassant !== "-") {
     game = game.withEnPassantSquare(chess.Square.fromString(enPassant)!);
   }
@@ -47,13 +69,30 @@ export function render(game: chess.Game): string {
     nextToMove = "b";
   }
 
+  let castling = "";
+  if (game.canCastleShort(chess.Piece.Colour.WHITE)) {
+    castling += "K";
+  }
+  if (game.canCastleLong(chess.Piece.Colour.WHITE)) {
+    castling += "Q";
+  }
+  if (game.canCastleShort(chess.Piece.Colour.BLACK)) {
+    castling += "k";
+  }
+  if (game.canCastleLong(chess.Piece.Colour.BLACK)) {
+    castling += "q";
+  }
+  if (castling === "") {
+    castling = "-";
+  }
+
   const enPassantSquare = game.getEnPassantSquare();
   let enPassant = "-";
   if (enPassantSquare !== undefined) {
     enPassant = enPassantSquare.toString().toLowerCase();
   }
 
-  return board + " " + nextToMove + " - " + enPassant;
+  return `${board} ${nextToMove} ${castling} ${enPassant}`;
 }
 
 function renderFile(game: chess.Game, file: chess.Square.File) {
