@@ -361,7 +361,10 @@ export class Game implements immutable.ValueObject {
       this.canCastleLong(piece.colour) &&
       this.getPiece(source.addColumn(-1)!) === undefined &&
       this.getPiece(source.addColumn(-2)!) === undefined &&
-      this.getPiece(source.addColumn(-3)!) === undefined
+      this.getPiece(source.addColumn(-3)!) === undefined &&
+      !this.underAttack(source) &&
+      !this.underAttack(source.addColumn(-1)!) &&
+      !this.underAttack(source.addColumn(-2)!)
     ) {
       return immutable.Set.of(source.addColumn(-2)!);
     }

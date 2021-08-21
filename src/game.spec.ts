@@ -339,6 +339,17 @@ describe("Game", () => {
           checkAllowedMoves(game, "e1", ["d2"]);
         });
       });
+
+      describe("if the king is checked, or any of the transit squares is attacked", () => {
+        it("does not allow to castle", () => {
+          let game = fen.parse("rnbqk1nr/ppp4p/8/3pppp1/1b1PPBQ1/N7/PPP2PPP/R3KBNR w KQkq -")!;
+          checkAllowedMoves(game, "e1", ["e2", "d1"]);
+          game = fen.parse("r2qkb1r/ppp2ppp/2n2n2/3pp1B1/4P1b1/2NP4/PPP2PPP/R3KBNR w KQkq -")!;
+          checkAllowedMoves(game, "e1", ["d2"]);
+          game = fen.parse("rnb1kbnr/ppp2ppp/8/4p1q1/3P4/2Np4/PPP2PPP/R3KBNR w KQkq -")!;
+          checkAllowedMoves(game, "e1", ["d1"]);
+        });
+      });
     });
 
     it("disallows to castle short or long once the king has been moved", () => {
