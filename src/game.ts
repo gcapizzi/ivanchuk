@@ -224,24 +224,24 @@ export class Game implements immutable.ValueObject {
     return this.underAttack(kingSquare);
   }
 
-  private pawnDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
+  private pawnDestinations(source: Square, pieceColour: Piece.Colour): immutable.Set<Square> {
     let frontMoves: Array<[number, number]> = [[1, 0]];
     if (this.onInitialPawnFile(source)) {
       frontMoves.push([2, 0]);
     }
 
-    return this.destinations(source, us, frontMoves)
+    return this.destinations(source, pieceColour, frontMoves)
       .takeWhile((s) => this.empty(s!))
       .union(
-        this.destinations(source, us, [
+        this.destinations(source, pieceColour, [
           [1, -1],
           [1, 1],
-        ]).filter((s) => this.occupiedByThem(s!, us) || this.enPassant(s!))
+        ]).filter((s) => this.occupiedByThem(s!, pieceColour) || this.enPassant(s!))
       );
   }
 
-  private knightDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
-    return this.destinations(source, us, [
+  private knightDestinations(source: Square, pieceColour: Piece.Colour): immutable.Set<Square> {
+    return this.destinations(source, pieceColour, [
       [2, 1],
       [2, -1],
       [-2, 1],
@@ -250,36 +250,36 @@ export class Game implements immutable.ValueObject {
       [1, -2],
       [-1, 2],
       [-1, -2],
-    ]).filter((s) => this.empty(s) || this.occupiedByThem(s, us));
+    ]).filter((s) => this.empty(s) || this.occupiedByThem(s, pieceColour));
   }
 
-  private bishopDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
-    return this.diagonalDestinations(source, us, -1, -1)
-      .union(this.diagonalDestinations(source, us, 1, 1))
-      .union(this.diagonalDestinations(source, us, -1, 1))
-      .union(this.diagonalDestinations(source, us, 1, -1));
+  private bishopDestinations(source: Square, pieceColour: Piece.Colour): immutable.Set<Square> {
+    return this.diagonalDestinations(source, pieceColour, -1, -1)
+      .union(this.diagonalDestinations(source, pieceColour, 1, 1))
+      .union(this.diagonalDestinations(source, pieceColour, -1, 1))
+      .union(this.diagonalDestinations(source, pieceColour, 1, -1));
   }
 
-  private rookDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
-    return this.verticalDestinations(source, us, 1)
-      .union(this.verticalDestinations(source, us, -1))
-      .union(this.horizontalDestinations(source, us, 1))
-      .union(this.horizontalDestinations(source, us, -1));
+  private rookDestinations(source: Square, pieceColour: Piece.Colour): immutable.Set<Square> {
+    return this.verticalDestinations(source, pieceColour, 1)
+      .union(this.verticalDestinations(source, pieceColour, -1))
+      .union(this.horizontalDestinations(source, pieceColour, 1))
+      .union(this.horizontalDestinations(source, pieceColour, -1));
   }
 
-  private queenDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
-    return this.verticalDestinations(source, us, 1)
-      .union(this.verticalDestinations(source, us, -1))
-      .union(this.horizontalDestinations(source, us, 1))
-      .union(this.horizontalDestinations(source, us, -1))
-      .union(this.diagonalDestinations(source, us, -1, -1))
-      .union(this.diagonalDestinations(source, us, 1, 1))
-      .union(this.diagonalDestinations(source, us, -1, 1))
-      .union(this.diagonalDestinations(source, us, 1, -1));
+  private queenDestinations(source: Square, pieceColour: Piece.Colour): immutable.Set<Square> {
+    return this.verticalDestinations(source, pieceColour, 1)
+      .union(this.verticalDestinations(source, pieceColour, -1))
+      .union(this.horizontalDestinations(source, pieceColour, 1))
+      .union(this.horizontalDestinations(source, pieceColour, -1))
+      .union(this.diagonalDestinations(source, pieceColour, -1, -1))
+      .union(this.diagonalDestinations(source, pieceColour, 1, 1))
+      .union(this.diagonalDestinations(source, pieceColour, -1, 1))
+      .union(this.diagonalDestinations(source, pieceColour, 1, -1));
   }
 
-  private kingDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
-    return this.destinations(source, us, [
+  private kingDestinations(source: Square, pieceColour: Piece.Colour): immutable.Set<Square> {
+    return this.destinations(source, pieceColour, [
       [1, 0],
       [1, 1],
       [0, 1],
@@ -288,12 +288,12 @@ export class Game implements immutable.ValueObject {
       [-1, -1],
       [0, -1],
       [1, -1],
-    ]).filter((s) => this.empty(s) || this.occupiedByThem(s, us));
+    ]).filter((s) => this.empty(s) || this.occupiedByThem(s, pieceColour));
   }
 
   private lineDestinations(
     source: Square,
-    us: Piece.Colour,
+    pieceColour: Piece.Colour,
     deltas: immutable.Seq.Indexed<[number, number]>
   ): immutable.Set<Square> {
     let line = deltas
@@ -304,27 +304,40 @@ export class Game implements immutable.ValueObject {
     let dests = line.takeWhile((s) => this.empty(s)).toSet();
     const block = line.find((s) => !this.empty(s));
     // capture
-    if (block && this.occupiedByThem(block, us)) {
+    if (block && this.occupiedByThem(block, pieceColour)) {
       return dests.add(block);
     }
 
     return dests;
   }
 
-  private diagonalDestinations(source: Square, us: Piece.Colour, xSign: number, ySign: number): immutable.Set<Square> {
+  private diagonalDestinations(
+    source: Square,
+    pieceColour: Piece.Colour,
+    xSign: number,
+    ySign: number
+  ): immutable.Set<Square> {
     return this.lineDestinations(
       source,
-      us,
+      pieceColour,
       immutable.Range(xSign, Infinity * xSign, xSign).zip(immutable.Range(ySign, Infinity * ySign, ySign))
     );
   }
 
-  private verticalDestinations(source: Square, us: Piece.Colour, ySign: number): immutable.Set<Square> {
-    return this.lineDestinations(source, us, immutable.Repeat(0).zip(immutable.Range(ySign, Infinity * ySign, ySign)));
+  private verticalDestinations(source: Square, pieceColour: Piece.Colour, ySign: number): immutable.Set<Square> {
+    return this.lineDestinations(
+      source,
+      pieceColour,
+      immutable.Repeat(0).zip(immutable.Range(ySign, Infinity * ySign, ySign))
+    );
   }
 
-  private horizontalDestinations(source: Square, us: Piece.Colour, xSign: number): immutable.Set<Square> {
-    return this.lineDestinations(source, us, immutable.Range(xSign, Infinity * xSign, xSign).zip(immutable.Repeat(0)));
+  private horizontalDestinations(source: Square, pieceColour: Piece.Colour, xSign: number): immutable.Set<Square> {
+    return this.lineDestinations(
+      source,
+      pieceColour,
+      immutable.Range(xSign, Infinity * xSign, xSign).zip(immutable.Repeat(0))
+    );
   }
 
   private shortCastleDestinations(source: Square, piece: Piece): immutable.Set<Square> {
@@ -375,9 +388,9 @@ export class Game implements immutable.ValueObject {
     return new Game(this.state.update("board", fn));
   }
 
-  private occupiedByThem(square: Square, us: Piece.Colour): boolean {
+  private occupiedByThem(square: Square, pieceColour: Piece.Colour): boolean {
     const piece = this.getPiece(square);
-    return piece !== undefined && piece.colour !== us;
+    return piece !== undefined && piece.colour !== pieceColour;
   }
 
   private underAttack(square: Square): boolean {
@@ -396,15 +409,24 @@ export class Game implements immutable.ValueObject {
     return this.state.enPassantSquare?.equals(square) ?? false;
   }
 
-  private destination(source: Square, us: Piece.Colour, deltaFile: number, deltaColumn: number): Square | undefined {
-    const directionMultiplier = us === Piece.Colour.WHITE ? 1 : -1;
+  private destination(
+    source: Square,
+    pieceColour: Piece.Colour,
+    deltaFile: number,
+    deltaColumn: number
+  ): Square | undefined {
+    const directionMultiplier = pieceColour === Piece.Colour.WHITE ? 1 : -1;
     return source.addFile(deltaFile * directionMultiplier)?.addColumn(deltaColumn * directionMultiplier);
   }
 
-  private destinations(source: Square, us: Piece.Colour, deltas: Array<[number, number]>): immutable.Set<Square> {
+  private destinations(
+    source: Square,
+    pieceColour: Piece.Colour,
+    deltas: Array<[number, number]>
+  ): immutable.Set<Square> {
     return immutable
       .Set(deltas)
-      .map(([df, dc]) => this.destination(source, us, df, dc))
+      .map(([df, dc]) => this.destination(source, pieceColour, df, dc))
       .filter((s) => s !== undefined) as immutable.Set<Square>;
   }
 
