@@ -84,22 +84,22 @@ export namespace Square {
 }
 
 function parseColumn(str: string): Square.Column | undefined {
-  switch (str.toUpperCase()) {
-    case "A":
+  switch (str.toLowerCase()) {
+    case "a":
       return Square.Column.A;
-    case "B":
+    case "b":
       return Square.Column.B;
-    case "C":
+    case "c":
       return Square.Column.C;
-    case "D":
+    case "d":
       return Square.Column.D;
-    case "E":
+    case "e":
       return Square.Column.E;
-    case "F":
+    case "f":
       return Square.Column.F;
-    case "G":
+    case "g":
       return Square.Column.G;
-    case "H":
+    case "h":
       return Square.Column.H;
   }
 }
@@ -128,21 +128,21 @@ function parseFile(str: string): Square.File | undefined {
 function columnStr(column: Square.Column): string {
   switch (column) {
     case Square.Column.A:
-      return "A";
+      return "a";
     case Square.Column.B:
-      return "B";
+      return "b";
     case Square.Column.C:
-      return "C";
+      return "c";
     case Square.Column.D:
-      return "D";
+      return "d";
     case Square.Column.E:
-      return "E";
+      return "e";
     case Square.Column.F:
-      return "F";
+      return "f";
     case Square.Column.G:
-      return "G";
+      return "g";
     case Square.Column.H:
-      return "H";
+      return "h";
   }
 }
 
