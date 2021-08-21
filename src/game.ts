@@ -142,13 +142,13 @@ export class Game implements immutable.ValueObject {
       newGame = newGame.performCastling(piece, source, destination);
 
       if (piece.type === Piece.Type.PAWN && Math.abs(destination.file - source.file) === 2) {
-        newGame = newGame.withEnPassantSquare(this.destination(destination, -1, 0)!);
+        newGame = newGame.withEnPassantSquare(this.destination(destination, piece.colour, -1, 0)!);
       } else {
         newGame = newGame.removeEnPassantSquare();
       }
 
       if (this.enPassant(destination)) {
-        newGame = newGame.removePiece(this.destination(destination, -1, 0)!);
+        newGame = newGame.removePiece(this.destination(destination, piece.colour, -1, 0)!);
       }
 
       if (piece.type === Piece.Type.KING) {
@@ -230,10 +230,10 @@ export class Game implements immutable.ValueObject {
       frontMoves.push([2, 0]);
     }
 
-    return this.destinations(source, frontMoves)
+    return this.destinations(source, us, frontMoves)
       .takeWhile((s) => this.empty(s!))
       .union(
-        this.destinations(source, [
+        this.destinations(source, us, [
           [1, -1],
           [1, 1],
         ]).filter((s) => this.occupiedByThem(s!, us) || this.enPassant(s!))
@@ -241,7 +241,7 @@ export class Game implements immutable.ValueObject {
   }
 
   private knightDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
-    return this.destinations(source, [
+    return this.destinations(source, us, [
       [2, 1],
       [2, -1],
       [-2, 1],
@@ -279,7 +279,7 @@ export class Game implements immutable.ValueObject {
   }
 
   private kingDestinations(source: Square, us: Piece.Colour): immutable.Set<Square> {
-    return this.destinations(source, [
+    return this.destinations(source, us, [
       [1, 0],
       [1, 1],
       [0, 1],
@@ -396,15 +396,15 @@ export class Game implements immutable.ValueObject {
     return this.state.enPassantSquare?.equals(square) ?? false;
   }
 
-  private destination(source: Square, deltaFile: number, deltaColumn: number): Square | undefined {
-    const directionMultiplier = this.state.nextToMove === Piece.Colour.WHITE ? 1 : -1;
+  private destination(source: Square, us: Piece.Colour, deltaFile: number, deltaColumn: number): Square | undefined {
+    const directionMultiplier = us === Piece.Colour.WHITE ? 1 : -1;
     return source.addFile(deltaFile * directionMultiplier)?.addColumn(deltaColumn * directionMultiplier);
   }
 
-  private destinations(source: Square, deltas: Array<[number, number]>): immutable.Set<Square> {
+  private destinations(source: Square, us: Piece.Colour, deltas: Array<[number, number]>): immutable.Set<Square> {
     return immutable
       .Set(deltas)
-      .map(([df, dc]) => this.destination(source, df, dc))
+      .map(([df, dc]) => this.destination(source, us, df, dc))
       .filter((s) => s !== undefined) as immutable.Set<Square>;
   }
 
